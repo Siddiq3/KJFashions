@@ -1,15 +1,17 @@
 import { motion } from 'framer-motion';
 import { Eye, ShoppingBag } from 'lucide-react';
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../../hooks/useCart';
 import { formatPrice, getDiscount } from '../../utils/currency';
+import { buildOrderItem, saveDirectOrder } from '../../utils/directOrder';
 import { optimizeImageUrl } from '../../utils/image';
 import { getStockLabel, isProductAvailable } from '../../utils/product';
 import Badge from '../ui/Badge.jsx';
 
 export default function ProductCard({ product, onQuickView }) {
   const { addToCart } = useCart();
+  const navigate = useNavigate();
   const [selectedSize, setSelectedSize] = useState('');
   const [sizeError, setSizeError] = useState('');
   const discount = getDiscount(product.originalPrice, product.price);
@@ -26,6 +28,17 @@ export default function ProductCard({ product, onQuickView }) {
 
     addToCart(product, 1, { size: selectedSize });
     setSizeError('');
+  };
+
+  const handleBuyNow = () => {
+    if (requiresSize && !selectedSize) {
+      setSizeError('Please select a size.');
+      return;
+    }
+
+    saveDirectOrder(buildOrderItem(product, 1, { size: selectedSize }));
+    setSizeError('');
+    navigate('/order?buyNow=1');
   };
 
   return (
@@ -100,15 +113,25 @@ export default function ProductCard({ product, onQuickView }) {
             {sizeError && <p className="mt-2 text-xs font-semibold text-red-600">{sizeError}</p>}
           </div>
         )}
-        <button
-          type="button"
-          disabled={!available}
-          onClick={handleAddToCart}
-          className="mt-4 flex w-full items-center justify-center gap-2 rounded-md bg-primary-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-primary-600 disabled:cursor-not-allowed disabled:bg-store-dark/25"
-        >
-          <ShoppingBag size={17} />
-          {available ? 'Add to Cart' : 'Out of Stock'}
-        </button>
+        <div className="mt-4 grid gap-2 sm:grid-cols-2">
+          <button
+            type="button"
+            disabled={!available}
+            onClick={handleAddToCart}
+            className="flex w-full items-center justify-center gap-2 rounded-md bg-primary-500 px-3 py-3 text-sm font-semibold text-white transition hover:bg-primary-600 disabled:cursor-not-allowed disabled:bg-store-dark/25"
+          >
+            <ShoppingBag size={17} />
+            {available ? 'Add to Cart' : 'Out of Stock'}
+          </button>
+          <button
+            type="button"
+            disabled={!available}
+            onClick={handleBuyNow}
+            className="flex w-full items-center justify-center rounded-md border border-primary-500 bg-white px-3 py-3 text-sm font-semibold text-primary-700 transition hover:bg-primary-50 disabled:cursor-not-allowed disabled:border-store-dark/20 disabled:text-store-dark/35"
+          >
+            Buy Now
+          </button>
+        </div>
       </div>
     </motion.article>
   );

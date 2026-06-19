@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useCart } from '../../hooks/useCart';
 import { buildWhatsAppURL } from '../../utils/whatsapp';
 
 const initialForm = {
@@ -12,14 +11,13 @@ const initialForm = {
   notes: '',
 };
 
-export default function OrderForm() {
+export default function OrderForm({ orderItems, orderTotal, onOrderComplete, emptyMessage = 'Add men\'s or kids\' wear items to your cart before placing an order.' }) {
   const [formData, setFormData] = useState(initialForm);
   const [errors, setErrors] = useState({});
-  const { cartItems, cartTotal, clearCart } = useCart();
   const navigate = useNavigate();
   const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER;
 
-  const disabled = useMemo(() => cartItems.length === 0 || !whatsappNumber, [cartItems.length, whatsappNumber]);
+  const disabled = useMemo(() => orderItems.length === 0 || !whatsappNumber, [orderItems.length, whatsappNumber]);
 
   const updateField = (field, value) => {
     setFormData((current) => ({ ...current, [field]: value }));
@@ -43,16 +41,16 @@ export default function OrderForm() {
     event.preventDefault();
     if (!validate() || disabled) return;
 
-    const url = buildWhatsAppURL(whatsappNumber, cartItems, cartTotal, formData);
-    clearCart();
+    const url = buildWhatsAppURL(whatsappNumber, orderItems, orderTotal, formData);
+    onOrderComplete();
     window.location.href = url;
   };
 
-  if (cartItems.length === 0) {
+  if (orderItems.length === 0) {
     return (
       <div className="rounded-md border border-primary-100 bg-white p-8 text-center shadow-sm">
         <h2 className="text-3xl font-semibold">Your cart is empty</h2>
-        <p className="mt-3 text-sm text-store-dark/65">Add men's or kids' wear items to your cart before placing an order.</p>
+        <p className="mt-3 text-sm text-store-dark/65">{emptyMessage}</p>
         <button type="button" onClick={() => navigate('/products')} className="btn-primary mt-6">
           Continue Shopping
         </button>

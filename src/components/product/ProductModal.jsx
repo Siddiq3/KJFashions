@@ -1,15 +1,17 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { X } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../../hooks/useCart';
 import { formatPrice } from '../../utils/currency';
+import { buildOrderItem, saveDirectOrder } from '../../utils/directOrder';
 import { optimizeImageUrl } from '../../utils/image';
 import { getStockLabel, isProductAvailable } from '../../utils/product';
 import Badge from '../ui/Badge.jsx';
 
 export default function ProductModal({ product, onClose }) {
   const { addToCart } = useCart();
+  const navigate = useNavigate();
   const available = product ? isProductAvailable(product) : false;
   const [selectedSize, setSelectedSize] = useState('');
   const [sizeError, setSizeError] = useState('');
@@ -31,6 +33,20 @@ export default function ProductModal({ product, onClose }) {
 
     addToCart(product, 1, { size: selectedSize });
     setSizeError('');
+  };
+
+  const handleBuyNow = () => {
+    if (!product) return;
+
+    if (requiresSize && !selectedSize) {
+      setSizeError('Please select a size.');
+      return;
+    }
+
+    saveDirectOrder(buildOrderItem(product, 1, { size: selectedSize }));
+    setSizeError('');
+    onClose();
+    navigate('/order?buyNow=1');
   };
 
   return (
@@ -107,6 +123,14 @@ export default function ProductModal({ product, onClose }) {
                   className="btn-primary disabled:cursor-not-allowed disabled:bg-store-dark/25"
                 >
                   Add to Cart
+                </button>
+                <button
+                  type="button"
+                  disabled={!available}
+                  onClick={handleBuyNow}
+                  className="btn-secondary disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  Buy Now
                 </button>
                 <Link to={`/products/${product.slug}`} onClick={onClose} className="btn-secondary">
                   View Details

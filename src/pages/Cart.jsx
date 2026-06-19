@@ -28,7 +28,7 @@ export default function Cart() {
         <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
           <div className="rounded-md border border-primary-100 bg-white px-5 shadow-sm">
             {cartItems.map((item) => (
-              <CartItem key={item.id} item={item} />
+              <CartItem key={item.key || `${item.id}-${item.size || 'default'}`} item={item} />
             ))}
           </div>
           <CartSummary />

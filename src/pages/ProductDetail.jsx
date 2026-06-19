@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { Share2, ShoppingBag } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import ImageZoom from '../components/product/ImageZoom.jsx';
 import ProductGrid from '../components/product/ProductGrid.jsx';
 import ProductModal from '../components/product/ProductModal.jsx';
@@ -12,6 +12,7 @@ import LoadingSpinner from '../components/ui/LoadingSpinner.jsx';
 import { useCart } from '../hooks/useCart';
 import { useProducts } from '../hooks/useProducts';
 import { formatPrice, getDiscount } from '../utils/currency';
+import { buildOrderItem, saveDirectOrder } from '../utils/directOrder';
 import { optimizeImageUrl } from '../utils/image';
 import { getStockLabel, isProductAvailable } from '../utils/product';
 
@@ -19,6 +20,7 @@ export default function ProductDetail() {
   const { slug } = useParams();
   const { products, loading, error, refetch } = useProducts();
   const { addToCart } = useCart();
+  const navigate = useNavigate();
   const [qty, setQty] = useState(1);
   const [quickView, setQuickView] = useState(null);
   const [selectedSize, setSelectedSize] = useState('');
@@ -74,6 +76,17 @@ export default function ProductDetail() {
 
     addToCart(product, qty, { size: selectedSize });
     setSizeError('');
+  };
+
+  const handleBuyNow = () => {
+    if (requiresSize && !selectedSize) {
+      setSizeError('Please select a size.');
+      return;
+    }
+
+    saveDirectOrder(buildOrderItem(product, qty, { size: selectedSize }));
+    setSizeError('');
+    navigate('/order?buyNow=1');
   };
 
   return (
@@ -176,6 +189,14 @@ export default function ProductDetail() {
             >
               <ShoppingBag size={18} />
               Add to Cart
+            </button>
+            <button
+              type="button"
+              disabled={!available}
+              onClick={handleBuyNow}
+              className="btn-secondary disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Buy Now
             </button>
             <button type="button" onClick={shareProduct} className="btn-secondary">
               <Share2 size={18} />
