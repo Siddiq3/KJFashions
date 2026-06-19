@@ -10,38 +10,45 @@ export const CartProvider = ({ children }) => {
     writeCart(cartItems);
   }, [cartItems]);
 
-  const addToCart = (product, qty = 1) => {
+  const addToCart = (product, qty = 1, options = {}) => {
+    const size = options.size || '';
+    const cartKey = `${product.id}-${size || 'default'}`;
+
     setCartItems((items) => {
-      const existing = items.find((item) => item.id === product.id);
+      const existing = items.find((item) => (item.key || `${item.id}-${item.size || 'default'}`) === cartKey);
 
       if (existing) {
         return items.map((item) =>
-          item.id === product.id ? { ...item, qty: item.qty + qty } : item,
+          (item.key || `${item.id}-${item.size || 'default'}`) === cartKey
+            ? { ...item, key: cartKey, qty: item.qty + qty }
+            : item,
         );
       }
 
       return [
         ...items,
         {
+          key: cartKey,
           id: product.id,
           slug: product.slug,
           name: product.name,
           price: product.price,
           image: product.images?.[0],
+          size,
           qty,
         },
       ];
     });
   };
 
-  const removeFromCart = (id) => {
-    setCartItems((items) => items.filter((item) => item.id !== id));
+  const removeFromCart = (key) => {
+    setCartItems((items) => items.filter((item) => (item.key || `${item.id}-${item.size || 'default'}`) !== key));
   };
 
-  const updateQty = (id, qty) => {
+  const updateQty = (key, qty) => {
     const nextQty = Math.max(1, Number(qty) || 1);
     setCartItems((items) =>
-      items.map((item) => (item.id === id ? { ...item, qty: nextQty } : item)),
+      items.map((item) => ((item.key || `${item.id}-${item.size || 'default'}`) === key ? { ...item, qty: nextQty } : item)),
     );
   };
 

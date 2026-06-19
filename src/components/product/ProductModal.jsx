@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { X } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../../hooks/useCart';
 import { formatPrice } from '../../utils/currency';
@@ -10,6 +11,27 @@ import Badge from '../ui/Badge.jsx';
 export default function ProductModal({ product, onClose }) {
   const { addToCart } = useCart();
   const available = product ? isProductAvailable(product) : false;
+  const [selectedSize, setSelectedSize] = useState('');
+  const [sizeError, setSizeError] = useState('');
+  const sizes = Array.isArray(product?.sizes) ? product.sizes.filter(Boolean) : [];
+  const requiresSize = sizes.length > 0;
+
+  useEffect(() => {
+    setSelectedSize('');
+    setSizeError('');
+  }, [product?.id]);
+
+  const handleAddToCart = () => {
+    if (!product) return;
+
+    if (requiresSize && !selectedSize) {
+      setSizeError('Please select a size.');
+      return;
+    }
+
+    addToCart(product, 1, { size: selectedSize });
+    setSizeError('');
+  };
 
   return (
     <AnimatePresence>
@@ -52,11 +74,36 @@ export default function ProductModal({ product, onClose }) {
                 {getStockLabel(product)}
               </p>
               <p className="mt-4 text-sm leading-7 text-store-dark/70">{product.description}</p>
+              {requiresSize && (
+                <div className="mt-5">
+                  <h3 className="text-sm font-semibold text-store-dark">Select Size</h3>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {sizes.map((size) => (
+                      <button
+                        key={size}
+                        type="button"
+                        onClick={() => {
+                          setSelectedSize(size);
+                          setSizeError('');
+                        }}
+                        className={`rounded-md border px-3 py-1.5 text-sm font-semibold transition ${
+                          selectedSize === size
+                            ? 'border-primary-600 bg-primary-600 text-white'
+                            : 'border-primary-100 bg-primary-50 text-store-dark hover:border-primary-500'
+                        }`}
+                      >
+                        {size}
+                      </button>
+                    ))}
+                  </div>
+                  {sizeError && <p className="mt-2 text-xs font-semibold text-red-600">{sizeError}</p>}
+                </div>
+              )}
               <div className="mt-6 flex flex-col gap-3 sm:flex-row">
                 <button
                   type="button"
                   disabled={!available}
-                  onClick={() => addToCart(product, 1)}
+                  onClick={handleAddToCart}
                   className="btn-primary disabled:cursor-not-allowed disabled:bg-store-dark/25"
                 >
                   Add to Cart

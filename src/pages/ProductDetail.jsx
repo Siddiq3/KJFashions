@@ -21,6 +21,8 @@ export default function ProductDetail() {
   const { addToCart } = useCart();
   const [qty, setQty] = useState(1);
   const [quickView, setQuickView] = useState(null);
+  const [selectedSize, setSelectedSize] = useState('');
+  const [sizeError, setSizeError] = useState('');
 
   const product = products.find((item) => item.slug === slug);
   const [selectedImage, setSelectedImage] = useState('');
@@ -28,6 +30,8 @@ export default function ProductDetail() {
 
   useEffect(() => {
     setSelectedImage('');
+    setSelectedSize('');
+    setSizeError('');
   }, [slug]);
 
   const related = useMemo(() => {
@@ -41,6 +45,8 @@ export default function ProductDetail() {
 
   const discount = getDiscount(product.originalPrice, product.price);
   const available = isProductAvailable(product);
+  const sizes = Array.isArray(product.sizes) ? product.sizes.filter(Boolean) : [];
+  const requiresSize = sizes.length > 0;
   const detailRows = [
     ['Fabric', product.fabric],
     ['Occasion', product.occasion],
@@ -58,6 +64,16 @@ export default function ProductDetail() {
     } else {
       await navigator.clipboard.writeText(url);
     }
+  };
+
+  const handleAddToCart = () => {
+    if (requiresSize && !selectedSize) {
+      setSizeError('Please select a size.');
+      return;
+    }
+
+    addToCart(product, qty, { size: selectedSize });
+    setSizeError('');
   };
 
   return (
@@ -106,16 +122,29 @@ export default function ProductDetail() {
             {getStockLabel(product)}
           </p>
           <p className="mt-5 text-sm leading-7 text-store-dark/70">{product.description}</p>
-          {Array.isArray(product.sizes) && product.sizes.length > 0 && (
+          {requiresSize && (
             <div className="mt-5">
-              <h2 className="text-sm font-semibold text-store-dark">Available Sizes</h2>
+              <h2 className="text-sm font-semibold text-store-dark">Select Size</h2>
               <div className="mt-2 flex flex-wrap gap-2">
-                {product.sizes.map((size) => (
-                  <span key={size} className="rounded-md border border-primary-100 bg-primary-50 px-3 py-1 text-sm font-semibold text-store-dark">
+                {sizes.map((size) => (
+                  <button
+                    key={size}
+                    type="button"
+                    onClick={() => {
+                      setSelectedSize(size);
+                      setSizeError('');
+                    }}
+                    className={`rounded-md border px-3 py-1.5 text-sm font-semibold transition ${
+                      selectedSize === size
+                        ? 'border-primary-600 bg-primary-600 text-white'
+                        : 'border-primary-100 bg-primary-50 text-store-dark hover:border-primary-500'
+                    }`}
+                  >
                     {size}
-                  </span>
+                  </button>
                 ))}
               </div>
+              {sizeError && <p className="mt-2 text-xs font-semibold text-red-600">{sizeError}</p>}
             </div>
           )}
           {detailRows.length > 0 && (
@@ -142,7 +171,7 @@ export default function ProductDetail() {
             <button
               type="button"
               disabled={!available}
-              onClick={() => addToCart(product, qty)}
+              onClick={handleAddToCart}
               className="btn-primary disabled:cursor-not-allowed disabled:bg-store-dark/25"
             >
               <ShoppingBag size={18} />

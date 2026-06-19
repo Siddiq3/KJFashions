@@ -6,6 +6,7 @@ import { optimizeImageUrl } from '../../utils/image';
 
 export default function CartItem({ item }) {
   const { removeFromCart, updateQty } = useCart();
+  const itemKey = item.key || `${item.id}-${item.size || 'default'}`;
 
   return (
     <div className="flex gap-4 border-b border-primary-100 py-4">
@@ -26,7 +27,7 @@ export default function CartItem({ item }) {
           </Link>
           <button
             type="button"
-            onClick={() => removeFromCart(item.id)}
+            onClick={() => removeFromCart(itemKey)}
             className="rounded-full p-1 text-store-dark/45 transition hover:bg-primary-50 hover:text-primary-700"
             aria-label={`Remove ${item.name}`}
           >
@@ -34,11 +35,14 @@ export default function CartItem({ item }) {
           </button>
         </div>
         <p className="mt-1 text-sm font-semibold text-primary-700">{formatPrice(item.price)}</p>
+        {item.size && (
+          <p className="mt-1 text-xs font-semibold text-store-dark/60">Size: {item.size}</p>
+        )}
         <div className="mt-3 flex items-center justify-between">
           <div className="flex items-center rounded-md border border-primary-100 bg-white">
             <button
               type="button"
-              onClick={() => updateQty(item.id, item.qty - 1)}
+              onClick={() => updateQty(itemKey, item.qty - 1)}
               className="p-2 text-store-dark/70 transition hover:text-primary-700"
               aria-label="Decrease quantity"
             >
@@ -47,7 +51,7 @@ export default function CartItem({ item }) {
             <span className="w-9 text-center text-sm font-semibold">{item.qty}</span>
             <button
               type="button"
-              onClick={() => updateQty(item.id, item.qty + 1)}
+              onClick={() => updateQty(itemKey, item.qty + 1)}
               className="p-2 text-store-dark/70 transition hover:text-primary-700"
               aria-label="Increase quantity"
             >

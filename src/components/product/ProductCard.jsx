@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { Eye, ShoppingBag } from 'lucide-react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../../hooks/useCart';
 import { formatPrice, getDiscount } from '../../utils/currency';
@@ -9,9 +10,23 @@ import Badge from '../ui/Badge.jsx';
 
 export default function ProductCard({ product, onQuickView }) {
   const { addToCart } = useCart();
+  const [selectedSize, setSelectedSize] = useState('');
+  const [sizeError, setSizeError] = useState('');
   const discount = getDiscount(product.originalPrice, product.price);
   const image = optimizeImageUrl(product.images?.[0]);
   const available = isProductAvailable(product);
+  const sizes = Array.isArray(product.sizes) ? product.sizes.filter(Boolean) : [];
+  const requiresSize = sizes.length > 0;
+
+  const handleAddToCart = () => {
+    if (requiresSize && !selectedSize) {
+      setSizeError('Please select a size.');
+      return;
+    }
+
+    addToCart(product, 1, { size: selectedSize });
+    setSizeError('');
+  };
 
   return (
     <motion.article
@@ -60,10 +75,35 @@ export default function ProductCard({ product, onQuickView }) {
         <p className={`mt-2 text-xs font-semibold ${available ? 'text-green-700' : 'text-store-dark/45'}`}>
           {getStockLabel(product)}
         </p>
+        {requiresSize && (
+          <div className="mt-3">
+            <p className="text-xs font-semibold text-store-dark/60">Select Size</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {sizes.map((size) => (
+                <button
+                  key={size}
+                  type="button"
+                  onClick={() => {
+                    setSelectedSize(size);
+                    setSizeError('');
+                  }}
+                  className={`rounded-md border px-2.5 py-1 text-xs font-semibold transition ${
+                    selectedSize === size
+                      ? 'border-primary-600 bg-primary-600 text-white'
+                      : 'border-primary-100 bg-primary-50 text-store-dark hover:border-primary-500'
+                  }`}
+                >
+                  {size}
+                </button>
+              ))}
+            </div>
+            {sizeError && <p className="mt-2 text-xs font-semibold text-red-600">{sizeError}</p>}
+          </div>
+        )}
         <button
           type="button"
           disabled={!available}
-          onClick={() => addToCart(product, 1)}
+          onClick={handleAddToCart}
           className="mt-4 flex w-full items-center justify-center gap-2 rounded-md bg-primary-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-primary-600 disabled:cursor-not-allowed disabled:bg-store-dark/25"
         >
           <ShoppingBag size={17} />
