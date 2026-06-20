@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { Eye, ShoppingBag } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../../hooks/useCart';
 import { formatPrice, getDiscount } from '../../utils/currency';
@@ -15,10 +15,26 @@ export default function ProductCard({ product, onQuickView }) {
   const [selectedSize, setSelectedSize] = useState('');
   const [sizeError, setSizeError] = useState('');
   const discount = getDiscount(product.originalPrice, product.price);
-  const image = optimizeImageUrl(product.images?.[0]);
+  const images = useMemo(() => (Array.isArray(product.images) ? product.images.filter(Boolean) : []), [product.images]);
+  const [activeImage, setActiveImage] = useState(0);
+  const image = optimizeImageUrl(images[activeImage] || images[0]);
   const available = isProductAvailable(product);
   const sizes = Array.isArray(product.sizes) ? product.sizes.filter(Boolean) : [];
   const requiresSize = sizes.length > 0;
+
+  useEffect(() => {
+    setActiveImage(0);
+  }, [product.id]);
+
+  useEffect(() => {
+    if (images.length <= 1) return undefined;
+
+    const timer = window.setInterval(() => {
+      setActiveImage((current) => (current + 1) % images.length);
+    }, 2600);
+
+    return () => window.clearInterval(timer);
+  }, [images.length]);
 
   const handleAddToCart = () => {
     if (requiresSize && !selectedSize) {
@@ -49,12 +65,33 @@ export default function ProductCard({ product, onQuickView }) {
     >
       <div className="relative aspect-[3/4] overflow-hidden bg-primary-50">
         {image ? (
-          <img
-            src={image}
-            alt={product.name}
-            loading="lazy"
-            className="h-full w-full object-cover transition duration-500 group-hover:scale-110"
-          />
+          <>
+            <motion.img
+              key={image}
+              src={image}
+              alt={product.name}
+              loading="lazy"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.35 }}
+              className="h-full w-full object-cover transition duration-500 group-hover:scale-110"
+            />
+            {images.length > 1 && (
+              <div className="absolute bottom-3 right-3 flex gap-1.5">
+                {images.map((item, index) => (
+                  <button
+                    key={item}
+                    type="button"
+                    onClick={() => setActiveImage(index)}
+                    className={`h-2 rounded-full transition ${
+                      activeImage === index ? 'w-5 bg-white' : 'w-2 bg-white/60'
+                    }`}
+                    aria-label={`Show image ${index + 1}`}
+                  />
+                ))}
+              </div>
+            )}
+          </>
         ) : (
           <div className="flex h-full items-center justify-center text-sm text-store-dark/50">No image</div>
         )}
