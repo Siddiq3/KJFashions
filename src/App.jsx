@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Route, Routes, useLocation } from 'react-router-dom';
 import Navbar from './components/layout/Navbar.jsx';
 import Footer from './components/layout/Footer.jsx';
+import ScrollToTop from './components/layout/ScrollToTop.jsx';
 import CartDrawer from './components/cart/CartDrawer.jsx';
 import LoadingSpinner from './components/ui/LoadingSpinner.jsx';
 import WhatsAppButton from './components/order/WhatsAppButton.jsx';
@@ -29,6 +30,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-store-cream">
+      <ScrollToTop />
       <Navbar onCartOpen={() => setCartOpen(true)} />
       <AnimatePresence mode="wait">
         <motion.main

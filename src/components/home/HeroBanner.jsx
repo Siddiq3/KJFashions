@@ -2,7 +2,6 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import logo from '../../assets/kj-logo.svg';
 import { optimizeImageUrl } from '../../utils/image';
 
 export default function HeroBanner({ banners }) {
@@ -21,7 +20,7 @@ export default function HeroBanner({ banners }) {
   if (!hasBanners) {
     return (
       <section className="overflow-hidden bg-primary-50">
-        <div className="container-page flex min-h-[420px] flex-col items-start justify-center gap-10 py-16 md:flex-row md:items-center md:justify-between">
+        <div className="container-page flex min-h-[420px] items-center py-16">
           <motion.div
             className="max-w-2xl"
             initial={{ opacity: 0, y: 24 }}
@@ -52,19 +51,6 @@ export default function HeroBanner({ banners }) {
               <Link to="/products" className="btn-primary mt-7">Shop Now</Link>
             </motion.div>
           </motion.div>
-          <motion.img
-            src={logo}
-            alt="Khwaja Textiles and Readymades"
-            className="h-44 w-44 rounded-full bg-white object-contain p-2 shadow-soft md:h-64 md:w-64"
-            initial={{ opacity: 0, scale: 0.86, rotate: -6 }}
-            animate={{ opacity: 1, scale: 1, rotate: 0, y: [0, -8, 0] }}
-            transition={{
-              opacity: { duration: 0.45 },
-              scale: { duration: 0.65, ease: 'easeOut' },
-              rotate: { duration: 0.65, ease: 'easeOut' },
-              y: { duration: 4, repeat: Infinity, ease: 'easeInOut' },
-            }}
-          />
         </div>
       </section>
     );
