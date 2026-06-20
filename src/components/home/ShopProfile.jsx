@@ -19,6 +19,7 @@ import {
 import { Link } from 'react-router-dom';
 import logo from '../../assets/kj-logo.svg';
 import { optimizeImageUrl } from '../../utils/image';
+import { normalizeWhatsAppNumber } from '../../utils/whatsapp';
 import WhatsAppIcon from '../ui/WhatsAppIcon.jsx';
 
 const bioText = `Hi, we're Khwaja Textiles & readymades. We help men and kids find comfortable daily wear, neat occasion outfits, and practical ready-made styles at fair prices. Browse the latest collection, check sizes and stock, then place your order directly on WhatsApp with confidence.`;
@@ -45,7 +46,7 @@ const getCoverImages = ({ products, categories, banners }) => {
 };
 
 export default function ShopProfile({ products = [], categories = [], banners = [] }) {
-  const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER;
+  const whatsappNumber = normalizeWhatsAppNumber(import.meta.env.VITE_WHATSAPP_NUMBER);
   const whatsappHref = whatsappNumber
     ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent('Hi, I want to know more about your collection.')}`
     : '/contact';

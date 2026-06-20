@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { buildWhatsAppURL } from '../../utils/whatsapp';
+import { buildWhatsAppURL, normalizeWhatsAppNumber } from '../../utils/whatsapp';
 
 const initialForm = {
   name: '',
@@ -15,7 +15,7 @@ export default function OrderForm({ orderItems, orderTotal, onOrderComplete, emp
   const [formData, setFormData] = useState(initialForm);
   const [errors, setErrors] = useState({});
   const navigate = useNavigate();
-  const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER;
+  const whatsappNumber = normalizeWhatsAppNumber(import.meta.env.VITE_WHATSAPP_NUMBER);
 
   const disabled = useMemo(() => orderItems.length === 0 || !whatsappNumber, [orderItems.length, whatsappNumber]);
 

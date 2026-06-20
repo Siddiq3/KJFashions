@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useCart } from '../../hooks/useCart';
 import logo from '../../assets/kj-logo.svg';
+import { normalizeWhatsAppNumber } from '../../utils/whatsapp';
 import WhatsAppIcon from '../ui/WhatsAppIcon.jsx';
 import MobileNav from './MobileNav.jsx';
 
@@ -18,7 +19,7 @@ export default function Navbar({ onCartOpen }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { cartCount } = useCart();
   const navigate = useNavigate();
-  const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER;
+  const whatsappNumber = normalizeWhatsAppNumber(import.meta.env.VITE_WHATSAPP_NUMBER);
 
   const openWhatsApp = () => {
     if (whatsappNumber) {

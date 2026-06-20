@@ -1,11 +1,12 @@
 import { Facebook, Instagram } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import logo from '../../assets/kj-logo.svg';
+import { normalizeWhatsAppNumber } from '../../utils/whatsapp';
 import WhatsAppIcon from '../ui/WhatsAppIcon.jsx';
 
 export default function Footer() {
   const year = new Date().getFullYear();
-  const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER;
+  const whatsappNumber = normalizeWhatsAppNumber(import.meta.env.VITE_WHATSAPP_NUMBER);
   const developerInstagram = 'siddiqkolimi';
   const developerInstagramUrl = `https://www.instagram.com/${developerInstagram}`;
 

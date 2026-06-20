@@ -1,8 +1,9 @@
 import { motion } from 'framer-motion';
+import { normalizeWhatsAppNumber } from '../../utils/whatsapp';
 import WhatsAppIcon from '../ui/WhatsAppIcon.jsx';
 
 export default function WhatsAppButton() {
-  const number = import.meta.env.VITE_WHATSAPP_NUMBER;
+  const number = normalizeWhatsAppNumber(import.meta.env.VITE_WHATSAPP_NUMBER);
 
   if (!number) return null;
 

@@ -1,8 +1,9 @@
 import { Mail, MapPin, Phone } from 'lucide-react';
 import WhatsAppIcon from '../components/ui/WhatsAppIcon.jsx';
+import { normalizeWhatsAppNumber } from '../utils/whatsapp';
 
 export default function Contact() {
-  const number = '919505701786';
+  const number = normalizeWhatsAppNumber(import.meta.env.VITE_WHATSAPP_NUMBER || '9505701786');
 
   return (
     <div className="container-page py-12">
