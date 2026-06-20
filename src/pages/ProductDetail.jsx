@@ -14,7 +14,7 @@ import { useProducts } from '../hooks/useProducts';
 import { formatPrice, getDiscount } from '../utils/currency';
 import { buildOrderItem, saveDirectOrder } from '../utils/directOrder';
 import { optimizeImageUrl } from '../utils/image';
-import { getStockLabel, isProductAvailable } from '../utils/product';
+import { getPublicProductSlug, getStockLabel, isProductAvailable } from '../utils/product';
 
 export default function ProductDetail() {
   const { slug } = useParams();
@@ -26,7 +26,7 @@ export default function ProductDetail() {
   const [selectedSize, setSelectedSize] = useState('');
   const [sizeError, setSizeError] = useState('');
 
-  const product = products.find((item) => item.slug === slug);
+  const product = products.find((item) => item.slug === slug || getPublicProductSlug(item) === slug);
   const [selectedImage, setSelectedImage] = useState('');
   const currentImage = selectedImage || product?.images?.[0];
 
@@ -35,6 +35,15 @@ export default function ProductDetail() {
     setSelectedSize('');
     setSizeError('');
   }, [slug]);
+
+  useEffect(() => {
+    if (!product) return;
+
+    const publicSlug = getPublicProductSlug(product);
+    if (publicSlug && slug !== publicSlug) {
+      navigate(`/products/${publicSlug}`, { replace: true });
+    }
+  }, [navigate, product, slug]);
 
   const related = useMemo(() => {
     if (!product) return [];

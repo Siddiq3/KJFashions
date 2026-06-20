@@ -34,7 +34,7 @@ export default function HeroBanner({ banners }) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.08, ease: 'easeOut' }}
             >
-              Khwaja Texttiles & Radymade
+              Khwaja Textiles & readymades
             </motion.h1>
             <motion.p
               className="mt-5 max-w-xl text-base leading-7 text-store-dark/70"

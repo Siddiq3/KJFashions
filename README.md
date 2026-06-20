@@ -1,4 +1,4 @@
-# Khwaja Texttiles & Radymade Store
+# Khwaja Textiles & readymades Store
 
 Production-ready React + Vite storefront for men's and kids' wear with GitHub raw JSON data, GitHub-hosted product images, localStorage cart, and WhatsApp order submission.
 
@@ -14,7 +14,7 @@ Production-ready React + Vite storefront for men's and kids' wear with GitHub ra
 ```bash
 VITE_DATA_BASE_URL=https://raw.githubusercontent.com/Siddiq3/shopbackend/main/data
 VITE_WHATSAPP_NUMBER=919952632682
-VITE_STORE_NAME=Khwaja Texttiles & Radymade
+VITE_STORE_NAME=Khwaja Textiles & readymades
 GITHUB_OWNER=Siddiq3
 GITHUB_REPO=shopbackend
 GITHUB_BRANCH=main

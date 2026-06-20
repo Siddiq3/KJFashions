@@ -3,14 +3,16 @@ import { Link } from 'react-router-dom';
 import { useCart } from '../../hooks/useCart';
 import { formatPrice } from '../../utils/currency';
 import { optimizeImageUrl } from '../../utils/image';
+import { getPublicProductSlug } from '../../utils/product';
 
 export default function CartItem({ item, readOnly = false }) {
   const { removeFromCart, updateQty } = useCart();
   const itemKey = item.key || `${item.id}-${item.size || 'default'}`;
+  const productPath = `/products/${getPublicProductSlug(item)}`;
 
   return (
     <div className="flex gap-4 border-b border-primary-100 py-4">
-      <Link to={`/products/${item.slug}`} className="h-24 w-20 shrink-0 overflow-hidden rounded-md bg-primary-50">
+      <Link to={productPath} className="h-24 w-20 shrink-0 overflow-hidden rounded-md bg-primary-50">
         {item.image ? (
           <img
             src={optimizeImageUrl(item.image)}
@@ -22,7 +24,7 @@ export default function CartItem({ item, readOnly = false }) {
       </Link>
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-3">
-          <Link to={`/products/${item.slug}`} className="font-semibold leading-5 text-store-dark hover:text-primary-700">
+          <Link to={productPath} className="font-semibold leading-5 text-store-dark hover:text-primary-700">
             {item.name}
           </Link>
           {!readOnly && (

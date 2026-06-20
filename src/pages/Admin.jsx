@@ -97,6 +97,7 @@ export default function Admin() {
   const [loggingIn, setLoggingIn] = useState(false);
   const [product, setProduct] = useState(emptyProduct);
   const [imageFiles, setImageFiles] = useState([]);
+  const [existingImages, setExistingImages] = useState([]);
   const [adminProducts, setAdminProducts] = useState([]);
   const [productsLoading, setProductsLoading] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -219,8 +220,15 @@ export default function Admin() {
     setSuccess('');
   };
 
+  const removeExistingImage = (imageToRemove) => {
+    setExistingImages((currentImages) => currentImages.filter((image) => image !== imageToRemove));
+    setError('');
+    setSuccess('');
+  };
+
   const resetProductForm = () => {
     setImageFiles([]);
+    setExistingImages([]);
     setEditingProduct(null);
     setProduct((current) => ({
       ...emptyProduct,
@@ -236,6 +244,7 @@ export default function Admin() {
     setEditingProduct(selectedProduct);
     setProduct(productToForm(selectedProduct));
     setImageFiles([]);
+    setExistingImages(selectedProduct.images || []);
     setError('');
     setSuccess('');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -249,7 +258,7 @@ export default function Admin() {
     if (!Number(product.price) || Number(product.price) <= 0) return 'Price must be greater than zero.';
     if (product.stockCount === '') return 'Stock count is required.';
     if (!product.description.trim()) return 'Description is required.';
-    if (imageFiles.length === 0 && !editingProduct?.images?.length) return 'Upload at least one product image.';
+    if (imageFiles.length === 0 && existingImages.length === 0) return 'Keep or upload at least one product image.';
     if (previewProduct.sizes.length === 0) return 'Add at least one size.';
     if (!product.fabric.trim()) return 'Fabric is required.';
     if (!product.color.trim()) return 'Color is required.';
@@ -276,7 +285,7 @@ export default function Admin() {
           id: editingProduct.id,
           product: previewProduct,
           imageFiles,
-          existingImages: editingProduct.images || [],
+          existingImages,
         });
         setSuccess(`${previewProduct.name} was updated in the catalogue.`);
       } else {
@@ -488,9 +497,33 @@ export default function Admin() {
                   }}
                   className="form-input resize-none"
                 />
-                {editingProduct?.images?.length > 0 && imageFiles.length === 0 && (
+                {editingProduct && existingImages.length > 0 && (
+                  <div className="mt-3">
+                    <p className="text-xs font-semibold text-store-dark/60">Current images</p>
+                    <div className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                      {existingImages.map((image) => (
+                        <div key={image} className="overflow-hidden rounded-md border border-primary-100 bg-white">
+                          <img src={image} alt="" className="h-28 w-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => removeExistingImage(image)}
+                            className="w-full px-3 py-2 text-xs font-semibold text-red-700 transition hover:bg-red-50"
+                          >
+                            Remove image
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {editingProduct?.images?.length > 0 && existingImages.length === 0 && imageFiles.length === 0 && (
+                  <div className="mt-3 rounded-md bg-red-50 p-3 text-xs font-semibold text-red-700">
+                    All current images are removed. Add at least one new image before updating.
+                  </div>
+                )}
+                {editingProduct?.images?.length > 0 && imageFiles.length === 0 && existingImages.length > 0 && (
                   <p className="mt-2 text-xs leading-5 text-store-dark/55">
-                    Existing images will be kept. Choose more images when you want to add to this product gallery.
+                    Current images will be kept unless you remove them. Choose more images to add to this product gallery.
                   </p>
                 )}
                 {imageFiles.length > 0 && (
@@ -571,7 +604,7 @@ export default function Admin() {
             <PreviewRow label="Color" value={previewProduct.color || 'Color'} />
             <PreviewRow
               label="Images"
-              value={imageFiles.length > 0 ? `${imageFiles.length} selected` : `${editingProduct?.images?.length || 0} existing`}
+              value={`${existingImages.length + imageFiles.length} total (${existingImages.length} current, ${imageFiles.length} new)`}
             />
           </div>
         </aside>

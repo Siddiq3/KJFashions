@@ -1,9 +1,11 @@
+import { getPublicProductSlug } from './product';
+
 const DIRECT_ORDER_KEY = 'khwaja_direct_order';
 
 export const buildOrderItem = (product, qty = 1, { size = '' } = {}) => ({
   key: `${product.id}-${size || 'direct'}-${Date.now()}`,
   id: product.id,
-  slug: product.slug,
+  slug: getPublicProductSlug(product),
   name: product.name,
   price: product.price,
   image: product.images?.[0],

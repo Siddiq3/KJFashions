@@ -1,5 +1,6 @@
 import { createContext, useEffect, useMemo, useState } from 'react';
 import { clearStoredCart, readCart, writeCart } from '../utils/cart';
+import { getPublicProductSlug } from '../utils/product';
 
 export const CartContext = createContext(null);
 
@@ -30,7 +31,7 @@ export const CartProvider = ({ children }) => {
         {
           key: cartKey,
           id: product.id,
-          slug: product.slug,
+          slug: getPublicProductSlug(product),
           name: product.name,
           price: product.price,
           image: product.images?.[0],

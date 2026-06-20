@@ -21,7 +21,7 @@ import logo from '../../assets/kj-logo.svg';
 import { optimizeImageUrl } from '../../utils/image';
 import WhatsAppIcon from '../ui/WhatsAppIcon.jsx';
 
-const bioText = `Hi, we're Khwaja Texttiles & Radymade. We help men and kids find comfortable daily wear, neat occasion outfits, and practical ready-made styles at fair prices. Browse the latest collection, check sizes and stock, then place your order directly on WhatsApp with confidence.`;
+const bioText = `Hi, we're Khwaja Textiles & readymades. We help men and kids find comfortable daily wear, neat occasion outfits, and practical ready-made styles at fair prices. Browse the latest collection, check sizes and stock, then place your order directly on WhatsApp with confidence.`;
 
 const workflowItems = [
   { title: 'Browse', text: 'Explore men and kids collections by category.', icon: Grid2X2 },
@@ -88,7 +88,7 @@ export default function ShopProfile({ products = [], categories = [], banners = 
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary-700">Local clothing store</p>
               <h1 className="text-3xl font-semibold leading-tight text-store-dark md:text-4xl">
-                Khwaja Texttiles & Radymade
+                Khwaja Textiles & readymades
               </h1>
             </div>
           </Link>
@@ -149,14 +149,14 @@ export default function ShopProfile({ products = [], categories = [], banners = 
         <div id="shop-bio" className="border-b border-primary-100 py-6">
           <div className="flex items-start gap-4">
             <div className="relative flex-none">
-              <img src={logo} alt="Khwaja Texttiles & Radymade" className="h-20 w-20 rounded-full border border-primary-100 bg-white object-contain p-1 shadow-sm" />
+              <img src={logo} alt="Khwaja Textiles & readymades" className="h-20 w-20 rounded-full border border-primary-100 bg-white object-contain p-1 shadow-sm" />
               <span className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-store-dark text-white shadow-sm">
                 <Scissors size={16} />
               </span>
             </div>
             <div className="min-w-0">
               <h2 className="text-3xl font-semibold leading-tight text-store-dark">siddiq</h2>
-              <p className="text-base text-store-dark/60">Khwaja Texttiles & Radymade (Owner)</p>
+              <p className="text-base text-store-dark/60">Khwaja Textiles & readymades (Owner)</p>
             </div>
           </div>
 

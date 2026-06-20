@@ -32,7 +32,7 @@ export default function Navbar({ onCartOpen }) {
         <Link to="/" className="flex shrink-0 items-center gap-3">
           <img src={logo} alt="Khwaja Textiles and Readymades" className="h-12 w-12 rounded-full object-contain" />
           <span className="hidden text-xl font-bold leading-6 text-primary-700 sm:block md:text-2xl" style={{ fontFamily: 'Playfair Display, serif' }}>
-            Khwaja Texttiles & Radymade
+            Khwaja Textiles & readymades
           </span>
         </Link>
 

@@ -9,3 +9,8 @@ export const getStockLabel = (product) => {
   if (product.stockCount <= 0) return 'Out of stock';
   return `${product.stockCount} in stock`;
 };
+
+export const getPublicProductSlug = (product) =>
+  String(product?.slug || '').replace(/-p\d+$/i, '');
+
+export const getProductPath = (product) => `/products/${getPublicProductSlug(product)}`;

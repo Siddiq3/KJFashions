@@ -6,7 +6,7 @@ import { useCart } from '../../hooks/useCart';
 import { formatPrice, getDiscount } from '../../utils/currency';
 import { buildOrderItem, saveDirectOrder } from '../../utils/directOrder';
 import { optimizeImageUrl } from '../../utils/image';
-import { getStockLabel, isProductAvailable } from '../../utils/product';
+import { getProductPath, getStockLabel, isProductAvailable } from '../../utils/product';
 import Badge from '../ui/Badge.jsx';
 
 export default function ProductCard({ product, onQuickView }) {
@@ -73,7 +73,7 @@ export default function ProductCard({ product, onQuickView }) {
       </div>
 
       <div className="p-4">
-        <Link to={`/products/${product.slug}`} className="block">
+        <Link to={getProductPath(product)} className="block">
           <h3 className="line-clamp-2 min-h-[56px] text-xl font-semibold text-store-dark transition hover:text-primary-700">
             {product.name}
           </h3>

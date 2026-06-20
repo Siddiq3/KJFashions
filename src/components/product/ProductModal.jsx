@@ -6,7 +6,7 @@ import { useCart } from '../../hooks/useCart';
 import { formatPrice } from '../../utils/currency';
 import { buildOrderItem, saveDirectOrder } from '../../utils/directOrder';
 import { optimizeImageUrl } from '../../utils/image';
-import { getStockLabel, isProductAvailable } from '../../utils/product';
+import { getProductPath, getStockLabel, isProductAvailable } from '../../utils/product';
 import Badge from '../ui/Badge.jsx';
 
 export default function ProductModal({ product, onClose }) {
@@ -132,7 +132,7 @@ export default function ProductModal({ product, onClose }) {
                 >
                   Buy Now
                 </button>
-                <Link to={`/products/${product.slug}`} onClick={onClose} className="btn-secondary">
+                <Link to={getProductPath(product)} onClick={onClose} className="btn-secondary">
                   View Details
                 </Link>
               </div>

@@ -8,7 +8,7 @@ export default function About() {
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary-700">About Khwaja</p>
           <h1 className="mt-3 text-5xl font-semibold text-store-dark md:text-6xl">Everyday clothing for men and kids.</h1>
           <p className="mt-5 text-base leading-8 text-store-dark/70">
-            Khwaja Texttiles & Radymade brings together practical, good-looking readymade clothing for men and children. Every collection is arranged to make browsing simple, checking availability quick, and ordering personal over WhatsApp.
+            Khwaja Textiles & readymades brings together practical, good-looking readymade clothing for men and children. Every collection is arranged to make browsing simple, checking availability quick, and ordering personal over WhatsApp.
           </p>
         </div>
         <div className="rounded-md bg-white p-7 shadow-sm">
