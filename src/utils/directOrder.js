@@ -2,13 +2,15 @@ import { getPublicProductSlug } from './product';
 
 const DIRECT_ORDER_KEY = 'khwaja_direct_order';
 
-export const buildOrderItem = (product, qty = 1, { size = '' } = {}) => ({
-  key: `${product.id}-${size || 'direct'}-${Date.now()}`,
+export const buildOrderItem = (product, qty = 1, { size = '', variant = {}, image = '' } = {}) => ({
+  key: `${product.id}-${variant.id || variant.color || 'default'}-${size || 'direct'}-${Date.now()}`,
   id: product.id,
   slug: getPublicProductSlug(product),
   name: product.name,
   price: product.price,
-  image: product.images?.[0],
+  image: image || variant.images?.[0] || product.images?.[0],
+  variantId: variant.id || '',
+  color: variant.color || product.color || '',
   size,
   qty: Math.max(1, Number(qty) || 1),
 });

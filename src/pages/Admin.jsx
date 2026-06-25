@@ -18,9 +18,18 @@ import {
   getProductTypeLabel,
   productTypeOptions,
 } from '../data/productOptions';
+import { getProductVariants } from '../utils/product';
 import { createSlug } from '../utils/slug';
 
 const today = new Date().toISOString().slice(0, 10);
+const makeVariant = (sizes = '') => ({
+  key: `variant-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+  color: '',
+  sizes,
+  stockCount: '',
+  existingImages: [],
+  imageFiles: [],
+});
 
 const emptyProduct = {
   name: '',
@@ -34,12 +43,10 @@ const emptyProduct = {
   inStock: true,
   featured: false,
   badge: '',
-  sizes: getDefaultSizes({ audience: 'men', productType: 'shirts' }),
   fabric: '',
   occasion: '',
-  color: '',
   careInstructions: '',
-  stockCount: '',
+  variants: [makeVariant(getDefaultSizes({ audience: 'men', productType: 'shirts' }))],
   createdAt: today,
 };
 
@@ -66,6 +73,14 @@ const productToForm = (product) => {
     ? 'kids'
     : 'men';
   const { productType, customProductType } = findProductType(product, audience);
+  const variants = getProductVariants(product).map((variant) => ({
+    key: variant.id || `variant-${Math.random().toString(36).slice(2, 8)}`,
+    color: variant.color,
+    sizes: variant.sizes.join(', '),
+    stockCount: typeof variant.stockCount === 'number' ? String(variant.stockCount) : '',
+    existingImages: variant.images,
+    imageFiles: [],
+  }));
 
   return {
     name: product.name || '',
@@ -79,12 +94,10 @@ const productToForm = (product) => {
     inStock: Boolean(product.inStock),
     featured: Boolean(product.featured),
     badge: product.badge || '',
-    sizes: Array.isArray(product.sizes) ? product.sizes.join(', ') : getDefaultSizes({ audience, productType }),
     fabric: product.fabric || '',
     occasion: product.occasion || '',
-    color: product.color || '',
     careInstructions: product.careInstructions || '',
-    stockCount: typeof product.stockCount === 'number' ? String(product.stockCount) : '',
+    variants,
     createdAt: product.createdAt || today,
   };
 };
@@ -96,8 +109,6 @@ export default function Admin() {
   const [loginError, setLoginError] = useState('');
   const [loggingIn, setLoggingIn] = useState(false);
   const [product, setProduct] = useState(emptyProduct);
-  const [imageFiles, setImageFiles] = useState([]);
-  const [existingImages, setExistingImages] = useState([]);
   const [adminProducts, setAdminProducts] = useState([]);
   const [productsLoading, setProductsLoading] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -141,13 +152,27 @@ export default function Admin() {
 
   const previewProduct = useMemo(() => {
     const slugBase = createSlug(product.name || 'new-product');
-    const stockCount = Math.max(0, Number(product.stockCount) || 0);
     const audience = getAudienceOption(product.audience);
     const productTypeLabel = getProductTypeLabel(product);
     const category = getCategorySlug(product);
+    const variants = product.variants.map((variant, index) => ({
+      id: `v${index + 1}`,
+      color: variant.color.trim(),
+      sizes: variant.sizes
+        .split(',')
+        .map((size) => size.trim())
+        .filter(Boolean),
+      stockCount: Math.max(0, Number(variant.stockCount) || 0),
+      images: variant.existingImages,
+    }));
+    const stockCount = variants.reduce((total, variant) => total + variant.stockCount, 0);
+    const sizes = Array.from(new Set(variants.flatMap((variant) => variant.sizes)));
+    const colors = variants.map((variant) => variant.color).filter(Boolean);
+    const images = variants.flatMap((variant) => variant.images);
     const tags = [
       product.audience,
       productTypeLabel,
+      ...colors,
       ...product.tags.split(','),
     ]
       .map((tag) => tag.trim().toLowerCase())
@@ -160,19 +185,17 @@ export default function Admin() {
       price: Number(product.price),
       originalPrice: Number(product.originalPrice || product.price),
       description: product.description.trim(),
-      images: [],
+      images,
       tags: Array.from(new Set(tags)),
       inStock: product.inStock && stockCount > 0,
       stockCount,
       featured: product.featured,
       badge: product.badge.trim() || null,
-      sizes: product.sizes
-        .split(',')
-        .map((size) => size.trim())
-        .filter(Boolean),
+      sizes,
       fabric: product.fabric.trim(),
       occasion: product.occasion.trim(),
-      color: product.color.trim(),
+      color: colors.join(', '),
+      variants,
       forAge: audience.forAge,
       gender: audience.gender,
       careInstructions: product.careInstructions.trim(),
@@ -185,10 +208,11 @@ export default function Admin() {
       const next = { ...current, [field]: value };
 
       if (field === 'audience' || field === 'productType') {
-        next.sizes = getDefaultSizes({
+        const sizes = getDefaultSizes({
           audience: field === 'audience' ? value : current.audience,
           productType: field === 'productType' ? value : current.productType,
         });
+        next.variants = current.variants.map((variant) => ({ ...variant, sizes }));
       }
 
       return next;
@@ -197,45 +221,86 @@ export default function Admin() {
     setSuccess('');
   };
 
-  const updateImageFiles = (fileList) => {
+  const updateVariant = (key, field, value) => {
+    setProduct((current) => ({
+      ...current,
+      variants: current.variants.map((variant) =>
+        variant.key === key ? { ...variant, [field]: value } : variant,
+      ),
+    }));
+    setError('');
+    setSuccess('');
+  };
+
+  const addVariant = () => {
+    const sizes = getDefaultSizes(product);
+    setProduct((current) => ({
+      ...current,
+      variants: [...current.variants, makeVariant(sizes)],
+    }));
+  };
+
+  const removeVariant = (key) => {
+    setProduct((current) => ({
+      ...current,
+      variants: current.variants.filter((variant) => variant.key !== key),
+    }));
+  };
+
+  const updateImageFiles = (key, fileList) => {
     const selectedFiles = Array.from(fileList || []);
 
-    setImageFiles((currentFiles) => {
-      const currentKeys = new Set(
-        currentFiles.map((file) => `${file.name}-${file.size}-${file.lastModified}`),
-      );
-      const newFiles = selectedFiles.filter(
-        (file) => !currentKeys.has(`${file.name}-${file.size}-${file.lastModified}`),
-      );
-
-      return [...currentFiles, ...newFiles];
-    });
+    setProduct((current) => ({
+      ...current,
+      variants: current.variants.map((variant) => {
+        if (variant.key !== key) return variant;
+        const currentKeys = new Set(
+          variant.imageFiles.map((file) => `${file.name}-${file.size}-${file.lastModified}`),
+        );
+        const newFiles = selectedFiles.filter(
+          (file) => !currentKeys.has(`${file.name}-${file.size}-${file.lastModified}`),
+        );
+        return { ...variant, imageFiles: [...variant.imageFiles, ...newFiles] };
+      }),
+    }));
     setError('');
     setSuccess('');
   };
 
-  const removeImageFile = (fileToRemove) => {
-    setImageFiles((currentFiles) => currentFiles.filter((file) => file !== fileToRemove));
+  const removeImageFile = (key, fileToRemove) => {
+    setProduct((current) => ({
+      ...current,
+      variants: current.variants.map((variant) =>
+        variant.key === key
+          ? { ...variant, imageFiles: variant.imageFiles.filter((file) => file !== fileToRemove) }
+          : variant,
+      ),
+    }));
     setError('');
     setSuccess('');
   };
 
-  const removeExistingImage = (imageToRemove) => {
-    setExistingImages((currentImages) => currentImages.filter((image) => image !== imageToRemove));
+  const removeExistingImage = (key, imageToRemove) => {
+    setProduct((current) => ({
+      ...current,
+      variants: current.variants.map((variant) =>
+        variant.key === key
+          ? { ...variant, existingImages: variant.existingImages.filter((image) => image !== imageToRemove) }
+          : variant,
+      ),
+    }));
     setError('');
     setSuccess('');
   };
 
   const resetProductForm = () => {
-    setImageFiles([]);
-    setExistingImages([]);
     setEditingProduct(null);
     setProduct((current) => ({
       ...emptyProduct,
       audience: current.audience,
       productType: current.productType,
       customProductType: current.customProductType,
-      sizes: getDefaultSizes(current),
+      variants: [makeVariant(getDefaultSizes(current))],
     }));
     setError('');
   };
@@ -243,8 +308,6 @@ export default function Admin() {
   const startEditingProduct = (selectedProduct) => {
     setEditingProduct(selectedProduct);
     setProduct(productToForm(selectedProduct));
-    setImageFiles([]);
-    setExistingImages(selectedProduct.images || []);
     setError('');
     setSuccess('');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -256,13 +319,17 @@ export default function Admin() {
     if (!product.productType) return 'Choose product type.';
     if (product.productType === 'other' && !product.customProductType.trim()) return 'Enter the product type.';
     if (!Number(product.price) || Number(product.price) <= 0) return 'Price must be greater than zero.';
-    if (product.stockCount === '') return 'Stock count is required.';
     if (!product.description.trim()) return 'Description is required.';
-    if (imageFiles.length === 0 && existingImages.length === 0) return 'Keep or upload at least one product image.';
-    if (previewProduct.sizes.length === 0) return 'Add at least one size.';
     if (!product.fabric.trim()) return 'Fabric is required.';
-    if (!product.color.trim()) return 'Color is required.';
-    if (Number(product.stockCount) < 0) return 'Stock count cannot be negative.';
+    if (product.variants.length === 0) return 'Add at least one color variant.';
+    const invalidVariant = product.variants.find((variant) =>
+      !variant.color.trim()
+      || variant.stockCount === ''
+      || Number(variant.stockCount) < 0
+      || !variant.sizes.split(',').some((size) => size.trim())
+      || (variant.imageFiles.length === 0 && variant.existingImages.length === 0),
+    );
+    if (invalidVariant) return 'Every color needs a name, stock count, at least one size, and at least one image.';
     return '';
   };
 
@@ -280,16 +347,18 @@ export default function Admin() {
     setSuccess('');
 
     try {
+      const variantUploads = product.variants.flatMap((variant, variantIndex) =>
+        variant.imageFiles.map((file) => ({ file, variantIndex })),
+      );
       if (editingProduct) {
         await updateProductFromAdmin({
           id: editingProduct.id,
           product: previewProduct,
-          imageFiles,
-          existingImages,
+          variantUploads,
         });
         setSuccess(`${previewProduct.name} was updated in the catalogue.`);
       } else {
-        await addProductFromAdmin({ product: previewProduct, imageFiles });
+        await addProductFromAdmin({ product: previewProduct, variantUploads });
         setSuccess(`${previewProduct.name} was saved to the catalogue.`);
       }
 
@@ -465,84 +534,120 @@ export default function Admin() {
               <Field label="Original Price">
                 <input type="number" min="1" value={product.originalPrice} onChange={(event) => updateProduct('originalPrice', event.target.value)} className="form-input" />
               </Field>
-              <Field label="Stock Count">
-                <input type="number" min="0" value={product.stockCount} onChange={(event) => updateProduct('stockCount', event.target.value)} className="form-input" placeholder="12" />
-              </Field>
-              <Field label="Sizes (auto-filled)">
-                <input value={product.sizes} onChange={(event) => updateProduct('sizes', event.target.value)} className="form-input" placeholder="S, M, L, XL, XXL" />
-                <p className="mt-2 text-xs leading-5 text-store-dark/55">
-                  Sizes change automatically when For or Product Type changes. You can edit them if needed.
-                </p>
-              </Field>
               <Field label="Fabric">
                 <input value={product.fabric} onChange={(event) => updateProduct('fabric', event.target.value)} className="form-input" placeholder="Cotton" />
               </Field>
               <Field label="Occasion">
                 <input value={product.occasion} onChange={(event) => updateProduct('occasion', event.target.value)} className="form-input" placeholder="Eid / Casual" />
               </Field>
-              <Field label="Color">
-                <input value={product.color} onChange={(event) => updateProduct('color', event.target.value)} className="form-input" placeholder="White" />
-              </Field>
               <Field label="Created At">
                 <input value={product.createdAt} onChange={(event) => updateProduct('createdAt', event.target.value)} className="form-input" placeholder="2025-04-15" />
               </Field>
-              <Field label="Product Images" full>
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={(event) => {
-                    updateImageFiles(event.target.files);
-                    event.target.value = '';
-                  }}
-                  className="form-input resize-none"
-                />
-                {editingProduct && existingImages.length > 0 && (
-                  <div className="mt-3">
-                    <p className="text-xs font-semibold text-store-dark/60">Current images</p>
-                    <div className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-3">
-                      {existingImages.map((image) => (
-                        <div key={image} className="overflow-hidden rounded-md border border-primary-100 bg-white">
-                          <img src={image} alt="" className="h-28 w-full object-cover" />
+              <div className="md:col-span-2">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-lg font-semibold text-store-dark">Color Variants</h3>
+                    <p className="mt-1 text-xs leading-5 text-store-dark/55">
+                      Add each available color with its own photos, sizes, and stock.
+                    </p>
+                  </div>
+                  <button type="button" onClick={addVariant} className="btn-secondary px-4 py-2">
+                    <Plus size={17} />
+                    Add Color
+                  </button>
+                </div>
+                <div className="mt-4 space-y-4">
+                  {product.variants.map((variant, variantIndex) => (
+                    <div key={variant.key} className="rounded-md border border-primary-100 bg-primary-50/50 p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <h4 className="font-semibold text-store-dark">Color {variantIndex + 1}</h4>
+                        {product.variants.length > 1 && (
                           <button
                             type="button"
-                            onClick={() => removeExistingImage(image)}
-                            className="w-full px-3 py-2 text-xs font-semibold text-red-700 transition hover:bg-red-50"
+                            onClick={() => removeVariant(variant.key)}
+                            className="inline-flex items-center gap-1 text-xs font-semibold text-red-700"
                           >
-                            Remove image
+                            <Trash2 size={15} />
+                            Remove color
                           </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {editingProduct?.images?.length > 0 && existingImages.length === 0 && imageFiles.length === 0 && (
-                  <div className="mt-3 rounded-md bg-red-50 p-3 text-xs font-semibold text-red-700">
-                    All current images are removed. Add at least one new image before updating.
-                  </div>
-                )}
-                {editingProduct?.images?.length > 0 && imageFiles.length === 0 && existingImages.length > 0 && (
-                  <p className="mt-2 text-xs leading-5 text-store-dark/55">
-                    Current images will be kept unless you remove them. Choose more images to add to this product gallery.
-                  </p>
-                )}
-                {imageFiles.length > 0 && (
-                  <div className="mt-3 space-y-2 rounded-md bg-primary-50 p-3 text-xs leading-5 text-store-dark/70">
-                    {imageFiles.map((file) => (
-                      <div key={`${file.name}-${file.size}-${file.lastModified}`} className="flex items-center justify-between gap-3">
-                        <span className="truncate">{file.name}</span>
-                        <button
-                          type="button"
-                          onClick={() => removeImageFile(file)}
-                          className="rounded-md px-2 py-1 font-semibold text-red-700 transition hover:bg-red-50"
-                        >
-                          Remove
-                        </button>
+                        )}
                       </div>
-                    ))}
-                  </div>
-                )}
-              </Field>
+                      <div className="mt-3 grid gap-4 md:grid-cols-2">
+                        <Field label="Color Name">
+                          <input
+                            value={variant.color}
+                            onChange={(event) => updateVariant(variant.key, 'color', event.target.value)}
+                            className="form-input"
+                            placeholder="White"
+                          />
+                        </Field>
+                        <Field label="Stock Count">
+                          <input
+                            type="number"
+                            min="0"
+                            value={variant.stockCount}
+                            onChange={(event) => updateVariant(variant.key, 'stockCount', event.target.value)}
+                            className="form-input"
+                            placeholder="12"
+                          />
+                        </Field>
+                        <Field label="Available Sizes" full>
+                          <input
+                            value={variant.sizes}
+                            onChange={(event) => updateVariant(variant.key, 'sizes', event.target.value)}
+                            className="form-input"
+                            placeholder="S, M, L, XL, XXL"
+                          />
+                        </Field>
+                        <Field label="Color Images" full>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            onChange={(event) => {
+                              updateImageFiles(variant.key, event.target.files);
+                              event.target.value = '';
+                            }}
+                            className="form-input resize-none"
+                          />
+                          {variant.existingImages.length > 0 && (
+                            <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                              {variant.existingImages.map((image) => (
+                                <div key={image} className="overflow-hidden rounded-md border border-primary-100 bg-white">
+                                  <img src={image} alt="" className="h-28 w-full object-cover" />
+                                  <button
+                                    type="button"
+                                    onClick={() => removeExistingImage(variant.key, image)}
+                                    className="w-full px-3 py-2 text-xs font-semibold text-red-700 transition hover:bg-red-50"
+                                  >
+                                    Remove image
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          {variant.imageFiles.length > 0 && (
+                            <div className="mt-3 space-y-2 rounded-md bg-white p-3 text-xs leading-5 text-store-dark/70">
+                              {variant.imageFiles.map((file) => (
+                                <div key={`${file.name}-${file.size}-${file.lastModified}`} className="flex items-center justify-between gap-3">
+                                  <span className="truncate">{file.name}</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => removeImageFile(variant.key, file)}
+                                    className="rounded-md px-2 py-1 font-semibold text-red-700 transition hover:bg-red-50"
+                                  >
+                                    Remove
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </Field>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
               <Field label="Description" full>
                 <textarea
                   rows={4}
@@ -601,10 +706,13 @@ export default function Admin() {
             <PreviewRow label="Stock" value={`${previewProduct.stockCount} item${previewProduct.stockCount === 1 ? '' : 's'}`} />
             <PreviewRow label="Sizes" value={previewProduct.sizes.join(', ') || 'Sizes'} />
             <PreviewRow label="Fabric" value={previewProduct.fabric || 'Fabric'} />
-            <PreviewRow label="Color" value={previewProduct.color || 'Color'} />
+            <PreviewRow label="Colors" value={previewProduct.color || 'Add a color'} />
             <PreviewRow
               label="Images"
-              value={`${existingImages.length + imageFiles.length} total (${existingImages.length} current, ${imageFiles.length} new)`}
+              value={`${product.variants.reduce(
+                (total, variant) => total + variant.existingImages.length + variant.imageFiles.length,
+                0,
+              )} across ${product.variants.length} color${product.variants.length === 1 ? '' : 's'}`}
             />
           </div>
         </aside>

@@ -6,25 +6,42 @@ import { useCart } from '../../hooks/useCart';
 import { formatPrice, getDiscount } from '../../utils/currency';
 import { buildOrderItem, saveDirectOrder } from '../../utils/directOrder';
 import { optimizeImageUrl } from '../../utils/image';
-import { getProductPath, getStockLabel, isProductAvailable } from '../../utils/product';
+import {
+  getProductPath,
+  getProductVariant,
+  getProductVariants,
+  getStockLabel,
+  isProductAvailable,
+} from '../../utils/product';
 import Badge from '../ui/Badge.jsx';
+import ColorSelector from './ColorSelector.jsx';
 
 export default function ProductCard({ product, onQuickView }) {
   const { addToCart } = useCart();
   const navigate = useNavigate();
   const [selectedSize, setSelectedSize] = useState('');
+  const [selectedVariantId, setSelectedVariantId] = useState('');
   const [sizeError, setSizeError] = useState('');
   const discount = getDiscount(product.originalPrice, product.price);
-  const images = useMemo(() => (Array.isArray(product.images) ? product.images.filter(Boolean) : []), [product.images]);
+  const variants = useMemo(() => getProductVariants(product), [product]);
+  const selectedVariant = getProductVariant(product, selectedVariantId);
+  const images = selectedVariant?.images || [];
   const [activeImage, setActiveImage] = useState(0);
+  const [imageLoaded, setImageLoaded] = useState(false);
   const image = optimizeImageUrl(images[activeImage] || images[0]);
-  const available = isProductAvailable(product);
-  const sizes = Array.isArray(product.sizes) ? product.sizes.filter(Boolean) : [];
+  const available = isProductAvailable(product, selectedVariant);
+  const sizes = selectedVariant?.sizes || [];
   const requiresSize = sizes.length > 0;
 
   useEffect(() => {
     setActiveImage(0);
+    setSelectedVariantId(variants[0]?.id || '');
+    setSelectedSize('');
   }, [product.id]);
+
+  useEffect(() => {
+    setImageLoaded(false);
+  }, [image]);
 
   useEffect(() => {
     if (images.length <= 1) return undefined;
@@ -42,7 +59,7 @@ export default function ProductCard({ product, onQuickView }) {
       return;
     }
 
-    addToCart(product, 1, { size: selectedSize });
+    addToCart(product, 1, { size: selectedSize, variant: selectedVariant, image: images[activeImage] });
     setSizeError('');
   };
 
@@ -52,7 +69,11 @@ export default function ProductCard({ product, onQuickView }) {
       return;
     }
 
-    saveDirectOrder(buildOrderItem(product, 1, { size: selectedSize }));
+    saveDirectOrder(buildOrderItem(product, 1, {
+      size: selectedSize,
+      variant: selectedVariant,
+      image: images[activeImage],
+    }));
     setSizeError('');
     navigate('/order?buyNow=1');
   };
@@ -66,13 +87,17 @@ export default function ProductCard({ product, onQuickView }) {
       <div className="relative aspect-[3/4] overflow-hidden bg-primary-50">
         {image ? (
           <>
+            {!imageLoaded && (
+              <div className="absolute inset-0 animate-pulse bg-primary-100/80" aria-hidden="true" />
+            )}
             <motion.img
               key={image}
               src={image}
               alt={product.name}
               loading="lazy"
+              onLoad={() => setImageLoaded(true)}
               initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
+              animate={{ opacity: imageLoaded ? 1 : 0 }}
               transition={{ duration: 0.35 }}
               className="h-full w-full object-cover transition duration-500 group-hover:scale-110"
             />
@@ -123,8 +148,19 @@ export default function ProductCard({ product, onQuickView }) {
           {discount > 0 && <span className="text-xs font-semibold text-green-700">{discount}% off</span>}
         </div>
         <p className={`mt-2 text-xs font-semibold ${available ? 'text-green-700' : 'text-store-dark/45'}`}>
-          {getStockLabel(product)}
+          {getStockLabel(product, selectedVariant)}
         </p>
+        <ColorSelector
+          variants={variants}
+          selectedVariantId={selectedVariant?.id}
+          compact
+          onSelect={(variant) => {
+            setSelectedVariantId(variant.id);
+            setSelectedSize('');
+            setActiveImage(0);
+            setSizeError('');
+          }}
+        />
         {requiresSize && (
           <div className="mt-3">
             <p className="text-xs font-semibold text-store-dark/60">Select Size</p>

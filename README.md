@@ -58,21 +58,37 @@ Products in `data/products.json` should use this shape:
   "price": 900,
   "originalPrice": 1300,
   "description": "Full product description here...",
-  "images": [
-    "https://raw.githubusercontent.com/Siddiq3/shopbackend/main/data/images/product-name-p033-1.jpg"
-  ],
+  "images": ["https://raw.githubusercontent.com/.../white-front.webp"],
   "tags": ["men", "shirts", "white"],
   "inStock": true,
-  "stockCount": 12,
+  "stockCount": 19,
   "featured": false,
   "badge": null,
-  "sizes": ["S", "M", "L", "XL", "XXL"],
+  "sizes": ["S", "M", "L", "XL"],
   "fabric": "Cotton",
   "occasion": "Eid / Casual",
-  "color": "White",
+  "color": "White, Black",
+  "variants": [
+    {
+      "id": "v1",
+      "color": "White",
+      "images": ["https://raw.githubusercontent.com/.../white-front.webp"],
+      "sizes": ["S", "M", "L"],
+      "stockCount": 12
+    },
+    {
+      "id": "v2",
+      "color": "Black",
+      "images": ["https://raw.githubusercontent.com/.../black-front.webp"],
+      "sizes": ["M", "L", "XL"],
+      "stockCount": 7
+    }
+  ],
   "forAge": "Adult",
   "gender": "Men",
   "careInstructions": "Machine wash cold",
   "createdAt": "2025-04-15"
 }
 ```
+
+The admin panel stores one catalogue product with multiple color variants. Each color has its own images, sizes, and stock count. The top-level `images`, `sizes`, `color`, and `stockCount` fields are retained as combined compatibility values for older catalogue data.

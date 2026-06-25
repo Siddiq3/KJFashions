@@ -45,7 +45,7 @@ export default function OrderPage() {
           <h2 className="text-2xl font-semibold text-store-dark">{isBuyNow ? 'Buy Now Item' : 'Order Items'}</h2>
           <div className="mt-2">
             {orderItems.map((item) => (
-              <CartItem key={item.key || `${item.id}-${item.size || 'default'}`} item={item} readOnly />
+              <CartItem key={item.key || `${item.id}-${item.color || 'default'}-${item.size || 'default'}`} item={item} readOnly />
             ))}
           </div>
           <div className="mt-5 flex justify-between border-t border-primary-100 pt-4">

@@ -95,10 +95,16 @@ const optimizeImageToWebp = async (file, index) => {
   };
 };
 
-export const addProductFromAdmin = async ({ product, imageFiles }) => {
-  const images = await Promise.all(
-    imageFiles.map((file, index) => optimizeImageToWebp(file, index)),
+const optimizeVariantUploads = (variantUploads) =>
+  Promise.all(
+    variantUploads.map(async ({ file, variantIndex }, index) => ({
+      ...(await optimizeImageToWebp(file, index)),
+      variantIndex,
+    })),
   );
+
+export const addProductFromAdmin = async ({ product, variantUploads }) => {
+  const images = await optimizeVariantUploads(variantUploads);
 
   const response = await fetch('/api/add-product', {
     method: 'POST',
@@ -116,16 +122,14 @@ export const addProductFromAdmin = async ({ product, imageFiles }) => {
   return data.product;
 };
 
-export const updateProductFromAdmin = async ({ id, product, imageFiles, existingImages }) => {
-  const images = await Promise.all(
-    imageFiles.map((file, index) => optimizeImageToWebp(file, index)),
-  );
+export const updateProductFromAdmin = async ({ id, product, variantUploads }) => {
+  const images = await optimizeVariantUploads(variantUploads);
 
   const response = await fetch('/api/update-product', {
     method: 'PUT',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id, product, images, existingImages }),
+    body: JSON.stringify({ id, product, images }),
   });
 
   const data = await response.json().catch(() => ({}));

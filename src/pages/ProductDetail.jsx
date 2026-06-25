@@ -3,18 +3,25 @@ import { Share2, ShoppingBag } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import ImageZoom from '../components/product/ImageZoom.jsx';
+import ColorSelector from '../components/product/ColorSelector.jsx';
 import ProductGrid from '../components/product/ProductGrid.jsx';
 import ProductModal from '../components/product/ProductModal.jsx';
+import { ProductDetailSkeleton } from '../components/product/ProductSkeleton.jsx';
 import Badge from '../components/ui/Badge.jsx';
 import EmptyState from '../components/ui/EmptyState.jsx';
 import ErrorState from '../components/ui/ErrorState.jsx';
-import LoadingSpinner from '../components/ui/LoadingSpinner.jsx';
 import { useCart } from '../hooks/useCart';
 import { useProducts } from '../hooks/useProducts';
 import { formatPrice, getDiscount } from '../utils/currency';
 import { buildOrderItem, saveDirectOrder } from '../utils/directOrder';
 import { optimizeImageUrl } from '../utils/image';
-import { getPublicProductSlug, getStockLabel, isProductAvailable } from '../utils/product';
+import {
+  getProductVariant,
+  getProductVariants,
+  getPublicProductSlug,
+  getStockLabel,
+  isProductAvailable,
+} from '../utils/product';
 
 export default function ProductDetail() {
   const { slug } = useParams();
@@ -24,17 +31,25 @@ export default function ProductDetail() {
   const [qty, setQty] = useState(1);
   const [quickView, setQuickView] = useState(null);
   const [selectedSize, setSelectedSize] = useState('');
+  const [selectedVariantId, setSelectedVariantId] = useState('');
   const [sizeError, setSizeError] = useState('');
 
   const product = products.find((item) => item.slug === slug || getPublicProductSlug(item) === slug);
+  const variants = getProductVariants(product);
+  const selectedVariant = getProductVariant(product, selectedVariantId);
   const [selectedImage, setSelectedImage] = useState('');
-  const currentImage = selectedImage || product?.images?.[0];
+  const currentImage = selectedImage || selectedVariant?.images?.[0];
 
   useEffect(() => {
     setSelectedImage('');
     setSelectedSize('');
+    setSelectedVariantId('');
     setSizeError('');
   }, [slug]);
+
+  useEffect(() => {
+    if (!selectedVariantId && variants[0]?.id) setSelectedVariantId(variants[0].id);
+  }, [selectedVariantId, variants]);
 
   useEffect(() => {
     if (!product) return;
@@ -50,18 +65,18 @@ export default function ProductDetail() {
     return products.filter((item) => item.category === product.category && item.id !== product.id).slice(0, 3);
   }, [product, products]);
 
-  if (loading) return <LoadingSpinner label="Loading product" />;
+  if (loading) return <ProductDetailSkeleton />;
   if (error) return <ErrorState message={error} onRetry={refetch} />;
   if (!product) return <div className="container-page py-10"><EmptyState title="Product not found" /></div>;
 
   const discount = getDiscount(product.originalPrice, product.price);
-  const available = isProductAvailable(product);
-  const sizes = Array.isArray(product.sizes) ? product.sizes.filter(Boolean) : [];
+  const available = isProductAvailable(product, selectedVariant);
+  const sizes = selectedVariant?.sizes || [];
   const requiresSize = sizes.length > 0;
   const detailRows = [
     ['Fabric', product.fabric],
     ['Occasion', product.occasion],
-    ['Color', product.color],
+    ['Color', selectedVariant?.color || product.color],
     ['For Age', product.forAge],
     ['Gender', product.gender],
     ['Care', product.careInstructions],
@@ -83,7 +98,7 @@ export default function ProductDetail() {
       return;
     }
 
-    addToCart(product, qty, { size: selectedSize });
+    addToCart(product, qty, { size: selectedSize, variant: selectedVariant, image: currentImage });
     setSizeError('');
   };
 
@@ -93,7 +108,11 @@ export default function ProductDetail() {
       return;
     }
 
-    saveDirectOrder(buildOrderItem(product, qty, { size: selectedSize }));
+    saveDirectOrder(buildOrderItem(product, qty, {
+      size: selectedSize,
+      variant: selectedVariant,
+      image: currentImage,
+    }));
     setSizeError('');
     navigate('/order?buyNow=1');
   };
@@ -111,7 +130,7 @@ export default function ProductDetail() {
       <div className="grid gap-10 lg:grid-cols-[1.05fr_0.95fr]">
         <div className="grid gap-4 md:grid-cols-[90px_1fr]">
           <div className="order-2 flex gap-3 overflow-x-auto md:order-1 md:flex-col">
-            {product.images?.map((image) => (
+            {selectedVariant?.images?.map((image) => (
               <button
                 key={image}
                 type="button"
@@ -141,9 +160,19 @@ export default function ProductDetail() {
             {product.originalPrice && <span className="text-lg text-store-dark/45 line-through">{formatPrice(product.originalPrice)}</span>}
           </div>
           <p className={`mt-2 text-sm font-semibold ${available ? 'text-green-700' : 'text-store-dark/45'}`}>
-            {getStockLabel(product)}
+            {getStockLabel(product, selectedVariant)}
           </p>
           <p className="mt-5 text-sm leading-7 text-store-dark/70">{product.description}</p>
+          <ColorSelector
+            variants={variants}
+            selectedVariantId={selectedVariant?.id}
+            onSelect={(variant) => {
+              setSelectedVariantId(variant.id);
+              setSelectedImage('');
+              setSelectedSize('');
+              setSizeError('');
+            }}
+          />
           {requiresSize && (
             <div className="mt-5">
               <h2 className="text-sm font-semibold text-store-dark">Select Size</h2>

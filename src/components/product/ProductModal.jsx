@@ -6,22 +6,39 @@ import { useCart } from '../../hooks/useCart';
 import { formatPrice } from '../../utils/currency';
 import { buildOrderItem, saveDirectOrder } from '../../utils/directOrder';
 import { optimizeImageUrl } from '../../utils/image';
-import { getProductPath, getStockLabel, isProductAvailable } from '../../utils/product';
+import {
+  getProductPath,
+  getProductVariant,
+  getProductVariants,
+  getStockLabel,
+  isProductAvailable,
+} from '../../utils/product';
 import Badge from '../ui/Badge.jsx';
+import ColorSelector from './ColorSelector.jsx';
 
 export default function ProductModal({ product, onClose }) {
   const { addToCart } = useCart();
   const navigate = useNavigate();
-  const available = product ? isProductAvailable(product) : false;
   const [selectedSize, setSelectedSize] = useState('');
+  const [selectedVariantId, setSelectedVariantId] = useState('');
+  const [imageLoaded, setImageLoaded] = useState(false);
   const [sizeError, setSizeError] = useState('');
-  const sizes = Array.isArray(product?.sizes) ? product.sizes.filter(Boolean) : [];
+  const variants = getProductVariants(product);
+  const selectedVariant = getProductVariant(product, selectedVariantId);
+  const available = product ? isProductAvailable(product, selectedVariant) : false;
+  const sizes = selectedVariant?.sizes || [];
   const requiresSize = sizes.length > 0;
 
   useEffect(() => {
     setSelectedSize('');
+    setSelectedVariantId(variants[0]?.id || '');
+    setImageLoaded(false);
     setSizeError('');
   }, [product?.id]);
+
+  useEffect(() => {
+    setImageLoaded(false);
+  }, [selectedVariant?.images?.[0]]);
 
   const handleAddToCart = () => {
     if (!product) return;
@@ -31,7 +48,11 @@ export default function ProductModal({ product, onClose }) {
       return;
     }
 
-    addToCart(product, 1, { size: selectedSize });
+    addToCart(product, 1, {
+      size: selectedSize,
+      variant: selectedVariant,
+      image: selectedVariant?.images?.[0],
+    });
     setSizeError('');
   };
 
@@ -43,7 +64,11 @@ export default function ProductModal({ product, onClose }) {
       return;
     }
 
-    saveDirectOrder(buildOrderItem(product, 1, { size: selectedSize }));
+    saveDirectOrder(buildOrderItem(product, 1, {
+      size: selectedSize,
+      variant: selectedVariant,
+      image: selectedVariant?.images?.[0],
+    }));
     setSizeError('');
     onClose();
     navigate('/order?buyNow=1');
@@ -66,12 +91,18 @@ export default function ProductModal({ product, onClose }) {
             className="grid max-h-[90vh] w-full max-w-4xl overflow-hidden rounded-md bg-white shadow-soft md:grid-cols-2"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="aspect-[3/4] bg-primary-50 md:aspect-auto">
+            <div className="relative aspect-[3/4] bg-primary-50 md:aspect-auto">
+              {!imageLoaded && (
+                <div className="absolute inset-0 animate-pulse bg-primary-100/80" aria-hidden="true" />
+              )}
               <img
-                src={optimizeImageUrl(product.images?.[0])}
+                src={optimizeImageUrl(selectedVariant?.images?.[0])}
                 alt={product.name}
                 loading="lazy"
-                className="h-full w-full object-cover"
+                onLoad={() => setImageLoaded(true)}
+                className={`h-full w-full object-cover transition-opacity duration-300 ${
+                  imageLoaded ? 'opacity-100' : 'opacity-0'
+                }`}
               />
             </div>
             <div className="relative overflow-y-auto p-6">
@@ -87,9 +118,18 @@ export default function ProductModal({ product, onClose }) {
               <h2 className="mt-4 text-3xl font-semibold text-store-dark">{product.name}</h2>
               <p className="mt-3 text-2xl font-bold text-primary-700">{formatPrice(product.price)}</p>
               <p className={`mt-2 text-xs font-semibold ${available ? 'text-green-700' : 'text-store-dark/45'}`}>
-                {getStockLabel(product)}
+                {getStockLabel(product, selectedVariant)}
               </p>
               <p className="mt-4 text-sm leading-7 text-store-dark/70">{product.description}</p>
+              <ColorSelector
+                variants={variants}
+                selectedVariantId={selectedVariant?.id}
+                onSelect={(variant) => {
+                  setSelectedVariantId(variant.id);
+                  setSelectedSize('');
+                  setSizeError('');
+                }}
+              />
               {requiresSize && (
                 <div className="mt-5">
                   <h3 className="text-sm font-semibold text-store-dark">Select Size</h3>

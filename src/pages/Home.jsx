@@ -6,8 +6,8 @@ import HeroBanner from '../components/home/HeroBanner.jsx';
 import Testimonials from '../components/home/Testimonials.jsx';
 import WhyChooseUs from '../components/home/WhyChooseUs.jsx';
 import ProductModal from '../components/product/ProductModal.jsx';
+import { ProductGridSkeleton } from '../components/product/ProductSkeleton.jsx';
 import ErrorState from '../components/ui/ErrorState.jsx';
-import LoadingSpinner from '../components/ui/LoadingSpinner.jsx';
 import { useProducts } from '../hooks/useProducts';
 
 export default function Home() {
@@ -43,7 +43,21 @@ export default function Home() {
   };
 
   if (productsLoading || loadingMeta) {
-    return <LoadingSpinner label="Loading collection" />;
+    return (
+      <div aria-label="Loading collection" aria-busy="true">
+        <div className="h-[440px] animate-pulse bg-primary-100/80" />
+        <div className="container-page py-14">
+          <div className="mb-8 h-10 w-64 animate-pulse rounded-md bg-primary-100/80" />
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 3 }, (_, index) => (
+              <div key={index} className="h-48 animate-pulse rounded-md bg-primary-100/80" />
+            ))}
+          </div>
+          <div className="mb-8 mt-14 h-10 w-72 animate-pulse rounded-md bg-primary-100/80" />
+          <ProductGridSkeleton count={6} />
+        </div>
+      </div>
+    );
   }
 
   if (productsError || metaError) {

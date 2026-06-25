@@ -33,7 +33,8 @@ const rawUrl = (filePath) =>
 const safeImagePath = ({ product, image, index }) => {
   const extension = image.name?.split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
   const imageFolder = IMAGES_PATH.replace(/\/$/, '');
-  return `${imageFolder}/${product.slug}-${index + 1}.${extension}`;
+  const variantNumber = Number(image.variantIndex) + 1;
+  return `${imageFolder}/${product.slug}-v${variantNumber}-${index + 1}.${extension}`;
 };
 
 const getNextProductId = (products) => {
@@ -129,8 +130,14 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Product name is required.' });
     }
 
-    if (!Array.isArray(images) || images.length === 0) {
-      return res.status(400).json({ error: 'Upload at least one product image.' });
+    if (!Array.isArray(product.variants) || product.variants.length === 0) {
+      return res.status(400).json({ error: 'Add at least one color variant.' });
+    }
+
+    if (!Array.isArray(images) || product.variants.some((_, index) =>
+      !images.some((image) => Number(image.variantIndex) === index)
+    )) {
+      return res.status(400).json({ error: 'Upload at least one image for every color.' });
     }
 
     const { products, sha } = await readProducts();
@@ -152,9 +159,16 @@ export default async function handler(req, res) {
       await uploadImage({ filePath: imagePaths[index], image, product: productToSave });
     }
 
+    const variants = productToSave.variants.map((variant, variantIndex) => ({
+      ...variant,
+      images: imagePaths
+        .filter((_, imageIndex) => Number(images[imageIndex].variantIndex) === variantIndex)
+        .map((filePath) => rawUrl(filePath)),
+    }));
     const productWithImages = {
       ...productToSave,
-      images: imagePaths.map((filePath) => rawUrl(filePath)),
+      variants,
+      images: variants.flatMap((variant) => variant.images),
     };
 
     await writeProducts({ products: [productWithImages, ...products], sha, product: productWithImages });

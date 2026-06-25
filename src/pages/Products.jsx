@@ -5,6 +5,7 @@ import { useSearchParams } from 'react-router-dom';
 import { fetchCategories } from '../api/data';
 import ProductGrid from '../components/product/ProductGrid.jsx';
 import ProductModal from '../components/product/ProductModal.jsx';
+import { ProductGridSkeleton } from '../components/product/ProductSkeleton.jsx';
 import EmptyState from '../components/ui/EmptyState.jsx';
 import ErrorState from '../components/ui/ErrorState.jsx';
 import LoadingSpinner from '../components/ui/LoadingSpinner.jsx';
@@ -97,7 +98,20 @@ export default function Products() {
     return () => observer.disconnect();
   }, [filteredProducts.length]);
 
-  if (loading) return <LoadingSpinner label="Loading products" />;
+  if (loading) {
+    return (
+      <div className="container-page py-10">
+        <div className="mb-8">
+          <div className="h-12 w-72 animate-pulse rounded-md bg-primary-100/80" />
+          <div className="mt-3 h-4 w-80 max-w-full animate-pulse rounded-md bg-primary-100/80" />
+        </div>
+        <div className="grid gap-8 md:grid-cols-[260px_1fr]">
+          <div className="hidden h-80 animate-pulse rounded-md bg-primary-100/80 md:block" />
+          <ProductGridSkeleton count={9} />
+        </div>
+      </div>
+    );
+  }
   if (error) return <ErrorState message={error} onRetry={refetch} />;
 
   return (

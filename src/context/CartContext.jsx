@@ -13,15 +13,19 @@ export const CartProvider = ({ children }) => {
 
   const addToCart = (product, qty = 1, options = {}) => {
     const size = options.size || '';
-    const cartKey = `${product.id}-${size || 'default'}`;
+    const variant = options.variant || {};
+    const color = variant.color || product.color || '';
+    const variantId = variant.id || color || 'default';
+    const selectedImage = options.image || variant.images?.[0] || product.images?.[0];
+    const cartKey = `${product.id}-${variantId}-${size || 'default'}`;
 
     setCartItems((items) => {
-      const existing = items.find((item) => (item.key || `${item.id}-${item.size || 'default'}`) === cartKey);
+      const existing = items.find((item) => item.key === cartKey);
 
       if (existing) {
         return items.map((item) =>
-          (item.key || `${item.id}-${item.size || 'default'}`) === cartKey
-            ? { ...item, key: cartKey, qty: item.qty + qty }
+          item.key === cartKey
+            ? { ...item, key: cartKey, image: selectedImage, color, variantId, qty: item.qty + qty }
             : item,
         );
       }
@@ -34,7 +38,9 @@ export const CartProvider = ({ children }) => {
           slug: getPublicProductSlug(product),
           name: product.name,
           price: product.price,
-          image: product.images?.[0],
+          image: selectedImage,
+          variantId,
+          color,
           size,
           qty,
         },
@@ -43,13 +49,13 @@ export const CartProvider = ({ children }) => {
   };
 
   const removeFromCart = (key) => {
-    setCartItems((items) => items.filter((item) => (item.key || `${item.id}-${item.size || 'default'}`) !== key));
+    setCartItems((items) => items.filter((item) => item.key !== key));
   };
 
   const updateQty = (key, qty) => {
     const nextQty = Math.max(1, Number(qty) || 1);
     setCartItems((items) =>
-      items.map((item) => ((item.key || `${item.id}-${item.size || 'default'}`) === key ? { ...item, qty: nextQty } : item)),
+      items.map((item) => (item.key === key ? { ...item, qty: nextQty } : item)),
     );
   };
 

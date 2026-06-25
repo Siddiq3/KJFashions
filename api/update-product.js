@@ -33,7 +33,8 @@ const rawUrl = (filePath) =>
 const safeNewImagePath = ({ product, image, index, uploadId }) => {
   const extension = image.name?.split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
   const imageFolder = IMAGES_PATH.replace(/\/$/, '');
-  return `${imageFolder}/${product.slug}-${uploadId}-${index + 1}.${extension}`;
+  const variantNumber = Number(image.variantIndex) + 1;
+  return `${imageFolder}/${product.slug}-v${variantNumber}-${uploadId}-${index + 1}.${extension}`;
 };
 
 const readProducts = async () => {
@@ -110,7 +111,7 @@ export default async function handler(req, res) {
 
   try {
     const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : req.body || {};
-    const { id, product, images = [], existingImages = [] } = body;
+    const { id, product, images = [] } = body;
 
     if (!id) {
       return res.status(400).json({ error: 'Product id is required.' });
@@ -120,12 +121,15 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Product name is required.' });
     }
 
-    if (!Array.isArray(images) || !Array.isArray(existingImages)) {
+    if (!Array.isArray(images) || !Array.isArray(product.variants) || product.variants.length === 0) {
       return res.status(400).json({ error: 'Images must be an array.' });
     }
 
-    if (images.length === 0 && existingImages.length === 0) {
-      return res.status(400).json({ error: 'Keep or upload at least one product image.' });
+    if (product.variants.some((variant, index) =>
+      (!Array.isArray(variant.images) || variant.images.length === 0)
+      && !images.some((image) => Number(image.variantIndex) === index)
+    )) {
+      return res.status(400).json({ error: 'Keep or upload at least one image for every color.' });
     }
 
     const { products, sha } = await readProducts();
@@ -161,10 +165,17 @@ export default async function handler(req, res) {
         await uploadImage({ filePath: imagePaths[index], image, product: productToSave });
       }
 
-      productToSave.images = [...existingImages, ...imagePaths.map((filePath) => rawUrl(filePath))];
-    } else {
-      productToSave.images = existingImages;
+      productToSave.variants = productToSave.variants.map((variant, variantIndex) => ({
+        ...variant,
+        images: [
+          ...(Array.isArray(variant.images) ? variant.images : []),
+          ...imagePaths
+            .filter((_, imageIndex) => Number(images[imageIndex].variantIndex) === variantIndex)
+            .map((filePath) => rawUrl(filePath)),
+        ],
+      }));
     }
+    productToSave.images = productToSave.variants.flatMap((variant) => variant.images || []);
 
     const nextProducts = [...products];
     nextProducts[productIndex] = productToSave;

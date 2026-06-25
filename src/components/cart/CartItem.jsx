@@ -7,7 +7,7 @@ import { getPublicProductSlug } from '../../utils/product';
 
 export default function CartItem({ item, readOnly = false }) {
   const { removeFromCart, updateQty } = useCart();
-  const itemKey = item.key || `${item.id}-${item.size || 'default'}`;
+  const itemKey = item.key || `${item.id}-${item.color || 'default'}-${item.size || 'default'}`;
   const productPath = `/products/${getPublicProductSlug(item)}`;
 
   return (
@@ -39,6 +39,9 @@ export default function CartItem({ item, readOnly = false }) {
           )}
         </div>
         <p className="mt-1 text-sm font-semibold text-primary-700">{formatPrice(item.price)}</p>
+        {item.color && (
+          <p className="mt-1 text-xs font-semibold text-store-dark/60">Color: {item.color}</p>
+        )}
         {item.size && (
           <p className="mt-1 text-xs font-semibold text-store-dark/60">Size: {item.size}</p>
         )}

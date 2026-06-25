@@ -19,7 +19,8 @@ export const buildWhatsAppURL = (number, cartItems, total, formData) => {
   const itemLines = cartItems
     .map((i) => {
       const sizeText = i.size ? ` | Size: ${i.size}` : '';
-      return `• ${i.name}${sizeText} x${i.qty} — ₹${(i.price * i.qty).toLocaleString('en-IN')}`;
+      const colorText = i.color ? ` | Color: ${i.color}` : '';
+      return `• ${i.name}${colorText}${sizeText} x${i.qty} — ₹${(i.price * i.qty).toLocaleString('en-IN')}`;
     })
     .join('\n');
 
