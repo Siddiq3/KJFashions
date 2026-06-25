@@ -40,6 +40,8 @@ export default function ProductDetail() {
   const selectedVariant = getProductVariant(product, selectedVariantId);
   const [selectedImage, setSelectedImage] = useState('');
   const currentImage = selectedImage || selectedVariant?.images?.[0];
+  const currentImageIndex = Math.max(0, selectedVariant?.images?.indexOf(currentImage) ?? 0);
+  const currentPreview = selectedVariant?.previews?.[currentImageIndex] || selectedVariant?.previews?.[0];
   const cartItemKey = searchParams.get('cartItem') || '';
   const editingCartItem = cartItems.find((item) => item.key === cartItemKey);
 
@@ -151,7 +153,7 @@ export default function ProductDetail() {
       <div className="grid gap-10 lg:grid-cols-[1.05fr_0.95fr]">
         <div className="grid gap-4 md:grid-cols-[90px_1fr]">
           <div className="order-2 flex gap-3 overflow-x-auto md:order-1 md:flex-col">
-            {selectedVariant?.images?.map((image) => (
+            {selectedVariant?.images?.map((image, index) => (
               <button
                 key={image}
                 type="button"
@@ -161,7 +163,7 @@ export default function ProductDetail() {
                 }`}
               >
                 <img
-                  src={optimizeImageUrl(image)}
+                  src={selectedVariant?.previews?.[index] || optimizeImageUrl(image)}
                   alt={product.name}
                   loading="lazy"
                   fetchPriority="low"
@@ -172,7 +174,7 @@ export default function ProductDetail() {
             ))}
           </div>
           <div className="order-1 md:order-2">
-            <ImageZoom src={currentImage} alt={product.name} />
+            <ImageZoom src={currentImage} preview={currentPreview} alt={product.name} />
           </div>
         </div>
 

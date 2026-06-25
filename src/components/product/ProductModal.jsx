@@ -92,7 +92,15 @@ export default function ProductModal({ product, onClose }) {
             onClick={(event) => event.stopPropagation()}
           >
             <div className="relative aspect-[3/4] bg-primary-50 md:aspect-auto">
-              {!imageLoaded && (
+              {!imageLoaded && selectedVariant?.previews?.[0] && (
+                <img
+                  src={selectedVariant.previews[0]}
+                  alt=""
+                  aria-hidden="true"
+                  className="absolute inset-0 h-full w-full scale-105 object-cover blur-sm"
+                />
+              )}
+              {!imageLoaded && !selectedVariant?.previews?.[0] && (
                 <div className="absolute inset-0 animate-pulse bg-primary-100/80" aria-hidden="true" />
               )}
               <img

@@ -3,7 +3,7 @@ import { optimizeImageUrl } from '../../utils/image';
 
 function VariantImage({ variant }) {
   const [loaded, setLoaded] = useState(false);
-  const image = variant.images?.[0];
+  const image = variant.previews?.[0] || variant.images?.[0];
 
   useEffect(() => {
     setLoaded(false);
@@ -21,9 +21,9 @@ function VariantImage({ variant }) {
     <>
       {!loaded && <span className="absolute inset-0 animate-pulse bg-store-dark/10" />}
       <img
-        src={optimizeImageUrl(image)}
+        src={image.startsWith('data:') ? image : optimizeImageUrl(image)}
         alt=""
-        loading="lazy"
+        loading={image.startsWith('data:') ? 'eager' : 'lazy'}
         fetchPriority="low"
         decoding="async"
         onLoad={() => setLoaded(true)}

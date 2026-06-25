@@ -1,4 +1,5 @@
 const cleanList = (value) => (Array.isArray(value) ? value.filter(Boolean) : []);
+const normalizePreviews = (value) => (Array.isArray(value) ? value : []);
 const normalizeStockCount = (value) => {
   if (value === '' || value === null || typeof value === 'undefined') return undefined;
   const stockCount = Number(value);
@@ -11,6 +12,7 @@ export const getProductVariants = (product) => {
       id: variant.id || `variant-${index + 1}`,
       color: String(variant.color || '').trim(),
       images: cleanList(variant.images),
+      previews: normalizePreviews(variant.previews),
       sizes: cleanList(variant.sizes),
       stockCount: normalizeStockCount(variant.stockCount),
     }))
@@ -22,6 +24,7 @@ export const getProductVariants = (product) => {
     id: 'default',
     color: String(product?.color || '').trim(),
     images: cleanList(product?.images),
+    previews: normalizePreviews(product?.previews),
     sizes: cleanList(product?.sizes),
     stockCount: normalizeStockCount(product?.stockCount),
   }];

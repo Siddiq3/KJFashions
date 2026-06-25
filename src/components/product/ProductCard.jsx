@@ -29,6 +29,7 @@ export default function ProductCard({ product, onQuickView, priority = false }) 
   const [activeImage, setActiveImage] = useState(0);
   const [imageLoaded, setImageLoaded] = useState(false);
   const image = optimizeImageUrl(images[activeImage] || images[0]);
+  const preview = selectedVariant?.previews?.[activeImage] || selectedVariant?.previews?.[0];
   const available = isProductAvailable(product, selectedVariant);
   const sizes = selectedVariant?.sizes || [];
   const requiresSize = sizes.length > 0;
@@ -77,7 +78,15 @@ export default function ProductCard({ product, onQuickView, priority = false }) 
       <div className="relative aspect-[3/4] overflow-hidden bg-primary-50">
         {image ? (
           <>
-            {!imageLoaded && (
+            {!imageLoaded && preview && (
+              <img
+                src={preview}
+                alt=""
+                aria-hidden="true"
+                className="absolute inset-0 h-full w-full scale-105 object-cover blur-sm"
+              />
+            )}
+            {!imageLoaded && !preview && (
               <div className="absolute inset-0 animate-pulse bg-primary-100/80" aria-hidden="true" />
             )}
             <motion.img

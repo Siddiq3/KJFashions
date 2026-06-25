@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { optimizeImageUrl } from '../../utils/image';
 
-export default function ImageZoom({ src, alt }) {
+export default function ImageZoom({ src, preview, alt }) {
   const [position, setPosition] = useState({ x: 50, y: 50 });
   const [loaded, setLoaded] = useState(false);
 
@@ -22,7 +22,17 @@ export default function ImageZoom({ src, alt }) {
       onMouseMove={handleMove}
       className="group relative aspect-[3/4] overflow-hidden rounded-md bg-primary-50"
     >
-      {!loaded && <div className="absolute inset-0 animate-pulse bg-primary-100/80" aria-hidden="true" />}
+      {!loaded && preview && (
+        <img
+          src={preview}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full scale-105 object-cover blur-sm"
+        />
+      )}
+      {!loaded && !preview && (
+        <div className="absolute inset-0 animate-pulse bg-primary-100/80" aria-hidden="true" />
+      )}
       <img
         src={optimizeImageUrl(src)}
         alt={alt}

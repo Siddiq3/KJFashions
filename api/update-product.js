@@ -139,8 +139,9 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: 'Product not found.' });
     }
 
+    const existingProduct = products[productIndex];
     const productToSave = {
-      ...products[productIndex],
+      ...existingProduct,
       ...product,
       id,
       slug: `${product.slugBase}-${id}`,
@@ -175,7 +176,19 @@ export default async function handler(req, res) {
         ],
       }));
     }
+    productToSave.variants = productToSave.variants.map((variant) => {
+      const existingVariant = (existingProduct.variants || []).find((item) => item.id === variant.id);
+      const existingPreviews = new Map(
+        (existingVariant?.images || []).map((image, index) => [image, existingVariant.previews?.[index] || null]),
+      );
+
+      return {
+        ...variant,
+        previews: (variant.images || []).map((image) => existingPreviews.get(image) || null),
+      };
+    });
     productToSave.images = productToSave.variants.flatMap((variant) => variant.images || []);
+    productToSave.previews = productToSave.variants.flatMap((variant) => variant.previews || []);
 
     const nextProducts = [...products];
     nextProducts[productIndex] = productToSave;
