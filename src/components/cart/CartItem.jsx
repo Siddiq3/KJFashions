@@ -3,16 +3,26 @@ import { Link } from 'react-router-dom';
 import { useCart } from '../../hooks/useCart';
 import { formatPrice } from '../../utils/currency';
 import { optimizeImageUrl } from '../../utils/image';
-import { getPublicProductSlug } from '../../utils/product';
+import { getProductPath } from '../../utils/product';
 
-export default function CartItem({ item, readOnly = false }) {
+export default function CartItem({ item, readOnly = false, onNavigate }) {
   const { removeFromCart, updateQty } = useCart();
   const itemKey = item.key || `${item.id}-${item.color || 'default'}-${item.size || 'default'}`;
-  const productPath = `/products/${getPublicProductSlug(item)}`;
+  const productPath = getProductPath(item, {
+    variantId: item.variantId,
+    size: item.size,
+    imageIndex: Number.isInteger(item.imageIndex) ? item.imageIndex : undefined,
+    cartItemKey: readOnly ? undefined : itemKey,
+  });
+  const handleNavigate = () => onNavigate?.();
 
   return (
     <div className="flex gap-4 border-b border-primary-100 py-4">
-      <Link to={productPath} className="h-24 w-20 shrink-0 overflow-hidden rounded-md bg-primary-50">
+      <Link
+        to={productPath}
+        onClick={handleNavigate}
+        className="h-24 w-20 shrink-0 overflow-hidden rounded-md bg-primary-50"
+      >
         {item.image ? (
           <img
             src={optimizeImageUrl(item.image)}
@@ -24,7 +34,11 @@ export default function CartItem({ item, readOnly = false }) {
       </Link>
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-3">
-          <Link to={productPath} className="font-semibold leading-5 text-store-dark hover:text-primary-700">
+          <Link
+            to={productPath}
+            onClick={handleNavigate}
+            className="font-semibold leading-5 text-store-dark hover:text-primary-700"
+          >
             {item.name}
           </Link>
           {!readOnly && (
@@ -44,6 +58,15 @@ export default function CartItem({ item, readOnly = false }) {
         )}
         {item.size && (
           <p className="mt-1 text-xs font-semibold text-store-dark/60">Size: {item.size}</p>
+        )}
+        {!readOnly && (
+          <Link
+            to={productPath}
+            onClick={handleNavigate}
+            className="mt-2 inline-block text-xs font-semibold text-primary-700 underline-offset-4 hover:underline"
+          >
+            View details / change options
+          </Link>
         )}
         <div className="mt-3 flex items-center justify-between">
           {readOnly ? (

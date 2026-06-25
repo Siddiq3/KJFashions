@@ -49,7 +49,11 @@ export default function CartDrawer({ open, onClose }) {
               <>
                 <div className="flex-1 overflow-y-auto px-5">
                   {cartItems.map((item) => (
-                    <CartItem key={item.key || `${item.id}-${item.size || 'default'}`} item={item} />
+                    <CartItem
+                      key={item.key || `${item.id}-${item.size || 'default'}`}
+                      item={item}
+                      onNavigate={onClose}
+                    />
                   ))}
                 </div>
                 <div className="border-t border-primary-100 bg-white p-5">

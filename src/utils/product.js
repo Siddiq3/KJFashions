@@ -54,4 +54,17 @@ export const getStockLabel = (product, variant) => {
 export const getPublicProductSlug = (product) =>
   String(product?.slug || '').replace(/-p\d+$/i, '');
 
-export const getProductPath = (product) => `/products/${getPublicProductSlug(product)}`;
+export const getProductPath = (product, options = {}) => {
+  const path = `/products/${getPublicProductSlug(product)}`;
+  const params = new URLSearchParams();
+
+  if (options.variantId) params.set('variant', options.variantId);
+  if (options.size) params.set('size', options.size);
+  if (Number.isInteger(options.imageIndex) && options.imageIndex >= 0) {
+    params.set('image', String(options.imageIndex));
+  }
+  if (options.cartItemKey) params.set('cartItem', options.cartItemKey);
+
+  const query = params.toString();
+  return query ? `${path}?${query}` : path;
+};

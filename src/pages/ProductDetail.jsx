@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { Share2, ShoppingBag } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import ImageZoom from '../components/product/ImageZoom.jsx';
 import ColorSelector from '../components/product/ColorSelector.jsx';
 import ProductGrid from '../components/product/ProductGrid.jsx';
@@ -26,8 +26,9 @@ import {
 export default function ProductDetail() {
   const { slug } = useParams();
   const { products, loading, error, refetch } = useProducts();
-  const { addToCart } = useCart();
+  const { addToCart, cartItems, updateCartItem } = useCart();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [qty, setQty] = useState(1);
   const [quickView, setQuickView] = useState(null);
   const [selectedSize, setSelectedSize] = useState('');
@@ -35,30 +36,44 @@ export default function ProductDetail() {
   const [sizeError, setSizeError] = useState('');
 
   const product = products.find((item) => item.slug === slug || getPublicProductSlug(item) === slug);
-  const variants = getProductVariants(product);
+  const variants = useMemo(() => getProductVariants(product), [product]);
   const selectedVariant = getProductVariant(product, selectedVariantId);
   const [selectedImage, setSelectedImage] = useState('');
   const currentImage = selectedImage || selectedVariant?.images?.[0];
+  const cartItemKey = searchParams.get('cartItem') || '';
+  const editingCartItem = cartItems.find((item) => item.key === cartItemKey);
 
   useEffect(() => {
     setSelectedImage('');
     setSelectedSize('');
     setSelectedVariantId('');
     setSizeError('');
-  }, [slug]);
+  }, [slug, searchParams]);
 
   useEffect(() => {
-    if (!selectedVariantId && variants[0]?.id) setSelectedVariantId(variants[0].id);
-  }, [selectedVariantId, variants]);
+    if (!product || variants.length === 0) return;
+
+    const requestedVariantId = searchParams.get('variant') || editingCartItem?.variantId || '';
+    const requestedVariant = variants.find((variant) => variant.id === requestedVariantId) || variants[0];
+    const requestedSize = searchParams.get('size') || editingCartItem?.size || '';
+    const requestedImageIndex = Number(searchParams.get('image') ?? editingCartItem?.imageIndex ?? 0);
+    const requestedImage = requestedVariant.images?.[requestedImageIndex] || requestedVariant.images?.[0] || '';
+
+    setSelectedVariantId(requestedVariant.id);
+    setSelectedSize(requestedVariant.sizes.includes(requestedSize) ? requestedSize : '');
+    setSelectedImage(requestedImage);
+    setQty(editingCartItem?.qty || 1);
+  }, [editingCartItem, product, searchParams, variants]);
 
   useEffect(() => {
     if (!product) return;
 
     const publicSlug = getPublicProductSlug(product);
     if (publicSlug && slug !== publicSlug) {
-      navigate(`/products/${publicSlug}`, { replace: true });
+      const query = searchParams.toString();
+      navigate(`/products/${publicSlug}${query ? `?${query}` : ''}`, { replace: true });
     }
-  }, [navigate, product, slug]);
+  }, [navigate, product, searchParams, slug]);
 
   const related = useMemo(() => {
     if (!product) return [];
@@ -98,7 +113,13 @@ export default function ProductDetail() {
       return;
     }
 
-    addToCart(product, qty, { size: selectedSize, variant: selectedVariant, image: currentImage });
+    const options = { size: selectedSize, variant: selectedVariant, image: currentImage };
+    if (editingCartItem) {
+      updateCartItem(editingCartItem.key, product, qty, options);
+      navigate(`/products/${getPublicProductSlug(product)}`, { replace: true });
+    } else {
+      addToCart(product, qty, options);
+    }
     setSizeError('');
   };
 
@@ -226,7 +247,7 @@ export default function ProductDetail() {
               className="btn-primary disabled:cursor-not-allowed disabled:bg-store-dark/25"
             >
               <ShoppingBag size={18} />
-              Add to Cart
+              {editingCartItem ? 'Update Cart' : 'Add to Cart'}
             </button>
             <button
               type="button"
