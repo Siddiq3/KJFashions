@@ -18,8 +18,9 @@ const imageContentTypes = {
 
 const githubHeaders = () => ({
   Authorization: `Bearer ${GITHUB_TOKEN}`,
-  Accept: 'application/vnd.github+json',
+  Accept: 'application/vnd.github.raw+json',
   'X-GitHub-Api-Version': '2022-11-28',
+  'User-Agent': 'khwaja-textiles-storefront',
 });
 
 const readError = async (response) => {
@@ -62,10 +63,13 @@ export default async function handler(req, res) {
     return res.status(response.status).json({ error: `Unable to read ${filePath}: ${await readError(response)}` });
   }
 
-  const data = await response.json();
-  const imageBuffer = Buffer.from(data.content || '', 'base64');
+  const imageBuffer = Buffer.from(await response.arrayBuffer());
 
   res.setHeader('Content-Type', getContentType(filePath));
-  res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+  res.setHeader('Content-Length', String(imageBuffer.length));
+  res.setHeader(
+    'Cache-Control',
+    'public, max-age=86400, s-maxage=604800, stale-while-revalidate=2592000',
+  );
   return res.end(imageBuffer);
 }

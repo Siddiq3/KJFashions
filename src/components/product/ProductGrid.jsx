@@ -23,9 +23,9 @@ export default function ProductGrid({ products, onQuickView }) {
       animate="show"
       className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3"
     >
-      {products.map((product) => (
+      {products.map((product, index) => (
         <motion.div key={product.id} variants={item}>
-          <ProductCard product={product} onQuickView={onQuickView} />
+          <ProductCard product={product} onQuickView={onQuickView} priority={index < 3} />
         </motion.div>
       ))}
     </motion.div>

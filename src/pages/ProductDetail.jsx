@@ -160,7 +160,14 @@ export default function ProductDetail() {
                   currentImage === image ? 'border-primary-600' : 'border-primary-100'
                 }`}
               >
-                <img src={optimizeImageUrl(image)} alt={product.name} loading="lazy" className="h-full w-full object-cover" />
+                <img
+                  src={optimizeImageUrl(image)}
+                  alt={product.name}
+                  loading="lazy"
+                  fetchPriority="low"
+                  decoding="async"
+                  className="h-full w-full object-cover"
+                />
               </button>
             ))}
           </div>

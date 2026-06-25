@@ -24,6 +24,8 @@ function VariantImage({ variant }) {
         src={optimizeImageUrl(image)}
         alt=""
         loading="lazy"
+        fetchPriority="low"
+        decoding="async"
         onLoad={() => setLoaded(true)}
         className={`h-full w-full object-cover transition-opacity duration-200 ${
           loaded ? 'opacity-100' : 'opacity-0'

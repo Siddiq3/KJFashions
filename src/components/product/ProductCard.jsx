@@ -16,7 +16,7 @@ import {
 import Badge from '../ui/Badge.jsx';
 import ColorSelector from './ColorSelector.jsx';
 
-export default function ProductCard({ product, onQuickView }) {
+export default function ProductCard({ product, onQuickView, priority = false }) {
   const { addToCart } = useCart();
   const navigate = useNavigate();
   const [selectedSize, setSelectedSize] = useState('');
@@ -42,16 +42,6 @@ export default function ProductCard({ product, onQuickView }) {
   useEffect(() => {
     setImageLoaded(false);
   }, [image]);
-
-  useEffect(() => {
-    if (images.length <= 1) return undefined;
-
-    const timer = window.setInterval(() => {
-      setActiveImage((current) => (current + 1) % images.length);
-    }, 2600);
-
-    return () => window.clearInterval(timer);
-  }, [images.length]);
 
   const handleAddToCart = () => {
     if (requiresSize && !selectedSize) {
@@ -94,7 +84,9 @@ export default function ProductCard({ product, onQuickView }) {
               key={image}
               src={image}
               alt={product.name}
-              loading="lazy"
+              loading={priority ? 'eager' : 'lazy'}
+              fetchPriority={priority ? 'high' : 'auto'}
+              decoding="async"
               onLoad={() => setImageLoaded(true)}
               initial={{ opacity: 0 }}
               animate={{ opacity: imageLoaded ? 1 : 0 }}

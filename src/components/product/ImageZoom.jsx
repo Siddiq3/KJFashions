@@ -26,7 +26,9 @@ export default function ImageZoom({ src, alt }) {
       <img
         src={optimizeImageUrl(src)}
         alt={alt}
-        loading="lazy"
+        loading="eager"
+        fetchPriority="high"
+        decoding="async"
         onLoad={() => setLoaded(true)}
         className={`h-full w-full object-cover transition duration-300 group-hover:scale-150 ${
           loaded ? 'opacity-100' : 'opacity-0'

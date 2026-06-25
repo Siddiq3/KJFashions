@@ -54,7 +54,7 @@ export default async function handler(req, res) {
 
   try {
     const data = await response.json();
-    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=3600');
     return res.status(200).json(JSON.parse(decodeBase64(data.content)));
   } catch {
     return res.status(500).json({ error: `${filePath} is not valid JSON.` });
